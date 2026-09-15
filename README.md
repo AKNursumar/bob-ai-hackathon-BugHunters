@@ -1,6 +1,4 @@
-# 🚀 [Your Project Title Here]
-
-> ⚠️ **Replace everything in `[ ]` brackets with your actual content before submission.**
+# 🚀 Harborline
 
 ---
 
@@ -8,10 +6,10 @@
 
 | Field | Value |
 |---|---|
-| **Team Name** | [Your Team Name] |
-| **Track** | [AI / DevOps / Sustainability / Open] |
-| **Team Lead** | [Name] — [email@ibm.com] |
-| **Members** | [Name 1], [Name 2], [Name 3] |
+| **Team Name** | BugHunters |
+| **Track** | Logistics/Port |
+| **Team Lead** | Aubaid Ahmed Saiyed — 24dit063@charusat.edu.in |
+| **Members** | Abdulkadir Nursumar, Ansh Patel, Krish Shah |
 
 ---
 
@@ -19,7 +17,7 @@
 
 > In 2–3 sentences: What problem does your project solve? Who experiences this problem?
 
-[Describe the real-world problem your project addresses. Be specific about who the user is and what pain point they face.]
+Port operators and shift supervisors often react to congestion only after vessel queues and delays have already formed. Changing vessel arrivals, berth availability, and port capacity make it difficult to anticipate congestion, understand its causes, and make timely operational decisions.
 
 ---
 
@@ -27,17 +25,17 @@
 
 > In 2–3 sentences: What did you build? How does it solve the problem above?
 
-[Describe your solution clearly. Explain the core mechanism — what makes it work.]
+PORTPULSE AI is an operational intelligence platform that combines historical port activity with live vessel intelligence to forecast congestion risk 24, 48, and 72 hours ahead. It explains the drivers behind the forecast, evaluates operational disruptions, optimises vessel and berth schedules, and generates an actionable 72-hour operating plan through IBM Bob.
 
 ---
 
 ## ✨ Key Features
 
-- **Feature 1:** [Brief description — e.g., "Real-time anomaly detection using watsonx.ai"]
-- **Feature 2:** [Brief description]
-- **Feature 3:** [Brief description]
-- **Feature 4:** [Optional]
-- **Feature 5:** [Optional]
+- **Predictive Congestion Intelligence:** Forecasts port congestion risk 24, 48, and 72 hours ahead with risk scores, trajectories, and key risk drivers.
+- **Real-Time Port Monitoring:** Tracks live vessel movements, arrivals, departures, inbound vessels, and current port conditions using AIS data.
+- **Operational Optimisation:** Optimises vessel sequencing, berth allocation, and resource utilisation to reduce waiting time and operational conflicts.
+- **What-If Simulation:** Simulates vessel delays, berth unavailability, and resource disruptions to evaluate their impact and recalculate operations.
+- **IBM Bob Operations Assistant:** Enables natural-language queries, congestion explanations, what-if analysis, optimisation, and 72-hour plan generation.
 
 ---
 
@@ -45,13 +43,14 @@
 
 | Category | Technologies |
 |---|---|
-| **Languages** | [e.g., Python, TypeScript] |
-| **Frameworks** | [e.g., FastAPI, React] |
-| **IBM Technologies** | [e.g., watsonx.ai, IBM Bob, IBM Cloud] |
-| **Databases** | [e.g., PostgreSQL, Redis] |
-| **Other** | [e.g., Docker, GitHub Actions] |
+| **Languages** | Python, TypeScript, JavaScript |
+| **Frameworks** | FastAPI, React, Vite |
+| **IBM Technologies** | IBM Bob, watsonx.ai, IBM Cloud |
+| **Database** | PostgreSQL |
+| **ML & Optimisation** | XGBoost, scikit-learn, OR-Tools |
+| **Data Sources** | AISStream, IMF PortWatch, Indian port/government datasets, weather/marine data |
+| **Infrastructure** | REST APIs, MCP, Docker, GitHub |
 
----
 
 ## 📁 Repository Structure
 

@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Harborline palette ── */
+  /* Deep navy */
+  --color-hl-navy-950: #071A2B;
+  --color-hl-navy-900: #0B2942;
+  --color-hl-navy-800: #0F3554;
+  --color-hl-navy-700: #145B8C;
+
+  /* Harbor blue */
+  --color-hl-blue-600: #145B8C;
+  --color-hl-blue-500: #1677C8;
+  --color-hl-blue-400: #2E8FDB;
+  --color-hl-blue-100: #DCEEFF;
+  --color-hl-blue-50:  #F3F8FC;
+
+  /* Neutral surfaces */
+  --color-hl-surface:   #FFFFFF;
+  --color-hl-surface-2: #F7F7F5;
+  --color-hl-surface-3: #F3F8FC;
+  --color-hl-border:    #DCE3E8;
+  --color-hl-border-2:  #C8D5DE;
+
+  /* Text */
+  --color-hl-text:        #071A2B;
+  --color-hl-text-muted:  #617080;
+  --color-hl-text-faint:  #98A8B4;
+
+  /* Severity */
+  --color-hl-ok:      #16A34A;
+  --color-hl-warn:    #D97706;
+  --color-hl-danger:  #DC2626;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #FFFFFF;
+  color: #071A2B;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, a { -webkit-tap-highlight-color: transparent; }
+
+/* ── App shell canvas ── */
+.app-canvas {
+  min-height: 100%;
+  background-color: #F7F7F5;
+}
+
+/* ── Typography utilities ── */
+.eyebrow {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  color: #617080;
+}
+
+.eyebrow-blue {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  color: #1677C8;
+}
+
+.editorial-heading {
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: #071A2B;
+}
+
+/* ── Card system ── */
+.hl-card {
+  background: #FFFFFF;
+  border: 1px solid #DCE3E8;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(7, 26, 43, 0.06), 0 4px 16px rgba(7, 26, 43, 0.04);
+}
+
+.hl-card-flat {
+  background: #FFFFFF;
+  border: 1px solid #DCE3E8;
+  border-radius: 6px;
+}
+
+.hl-card-navy {
+  background: #0B2942;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+}
+
+.hl-card-glass {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(7, 26, 43, 0.12);
+}
+
+.hl-card-glass-dark {
+  background: rgba(7, 26, 43, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+}
+
+/* ── Section backgrounds ── */
+.section-white {
+  background: #FFFFFF;
+}
+
+.section-warm {
+  background: #F7F7F5;
+}
+
+.section-pale-blue {
+  background: #F3F8FC;
+}
+
+.section-navy {
+  background: #071A2B;
+}
+
+/* ── Status dots ── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-dot-live { background: #16A34A; }
+.status-dot-warn { background: #D97706; }
+.status-dot-crit { background: #DC2626; }
+.status-dot-live.pulse { animation: pulse-live 2s ease-in-out infinite; }
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+/* ── Risk badge ── */
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.risk-badge-high   { background: #FEE2E2; color: #DC2626; }
+.risk-badge-medium { background: #FEF3C7; color: #D97706; }
+.risk-badge-low    { background: #DCFCE7; color: #16A34A; }
+.risk-badge-critical { background: #DC2626; color: #FFFFFF; }
+
+/* ── Grid overlay for hero ── */
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(22, 119, 200, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 119, 200, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Data chart bars ── */
+.chart-bar {
+  border-radius: 2px 2px 0 0;
+  transition: opacity 0.2s;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #F3F8FC; }
+::-webkit-scrollbar-thumb { background: #C8D5DE; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #98A8B4; }
+
+/* ── Vessel timeline blocks ── */
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.timeline-block {
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+  transition: opacity 0.15s;
+}
+
+/* ── Forecast chart ── */
+.forecast-confidence-band {
+  fill: rgba(22, 119, 200, 0.08);
+}
+
+/* ── Navigation transitions ── */
+.nav-link {
+  transition: color 0.15s, background-color 0.15s;
+}
+
+/* ── Fade-in animation for page loads ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.35s ease-out both;
+}
+.fade-in-up-delay-1 { animation-delay: 0.05s; }
+.fade-in-up-delay-2 { animation-delay: 0.10s; }
+.fade-in-up-delay-3 { animation-delay: 0.15s; }
+.fade-in-up-delay-4 { animation-delay: 0.20s; }
+
+/* ── Subtle breathing glow on live indicator ── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(22, 163, 74, 0); }
+}
+.glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+
+/* ── Map-like route lines ── */
+.route-line {
+  stroke: rgba(22, 119, 200, 0.25);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  fill: none;
+}
+
+/* ── Print / export friendly ── */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
+  .hl-card, .hl-card-flat { box-shadow: none; border: 1px solid #ccc; }
+}
