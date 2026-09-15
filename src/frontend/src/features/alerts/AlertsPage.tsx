@@ -32,7 +32,7 @@ const MOCK_ALERTS: Alert[] = [
     id: 'ALT-002',
     severity: 'critical',
     title: 'Congestion risk surge detected',
-    location: 'Los Angeles / Long Beach',
+    location: 'JNPA / Nhava Sheva',
     what: 'Congestion probability jumped from 58% to 72% in the last 4 hours.',
     why: 'Vessel arrivals increased +18% vs forecast. Anchorage queue now at 12 vessels, +40% above baseline.',
     when: 'Next 24 hours · Peak: 14:00–20:00',

@@ -20,8 +20,8 @@ interface PortForecastData {
 }
 
 const DEFAULT_FORECAST: PortForecastData = {
-  port: 'lalb',
-  displayName: 'Los Angeles–Long Beach',
+  port: 'port776',
+  displayName: 'JNPA / Nhava Sheva',
   congestionIndex: 78.5,
   pressureState: 'SURGING',
   forecast24h: { probability: 0.83, risk: 'CRITICAL', confidence: 0.89 },
@@ -104,16 +104,18 @@ function ForecastChart({ data }: { data: PortForecastData }) {
   );
 }
 
+import { usePort } from '@/contexts/PortContext';
+
 export function PredictionsPage() {
-  const [selectedPort, setSelectedPort] = useState('lalb');
+  const { selectedPort } = usePort();
   const [forecastData, setForecastData] = useState<PortForecastData>(DEFAULT_FORECAST);
 
   useEffect(() => {
     async function loadForecast() {
       try {
         const [forecastRes, driversRes] = await Promise.allSettled([
-          fetch(`/api/v1/congestion/forecast/${selectedPort}`),
-          fetch(`/api/v1/congestion/predictions/${selectedPort}`),
+          fetch(`/api/v1/congestion/forecast/${selectedPort.id}`),
+          fetch(`/api/v1/congestion/predictions/${selectedPort.id}`),
         ]);
 
         let updatedData: Partial<PortForecastData> = {};
@@ -121,7 +123,7 @@ export function PredictionsPage() {
         if (forecastRes.status === 'fulfilled' && forecastRes.value.ok) {
           const data = await forecastRes.value.json();
           updatedData = {
-            port: selectedPort,
+            port: selectedPort.id,
             displayName: data.port_name ?? DEFAULT_FORECAST.displayName,
             congestionIndex: data.current_activity?.congestion_index ?? 75.0,
             pressureState: 'SURGING',
@@ -160,20 +162,11 @@ export function PredictionsPage() {
     <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl fade-in-up">
       <PageHeader
         title="Congestion Predictions"
-        subtitle="XGBoost time-series forecasting · 24h, 48h & 72h congestion probability"
-        actions={
-          <select
-            value={selectedPort}
-            onChange={(e) => setSelectedPort(e.target.value)}
-            className="text-[12px] border border-[#DCE3E8] rounded-lg px-3 py-2 bg-white text-[#071A2B] font-medium"
-          >
-            <option value="lalb">Los Angeles–Long Beach</option>
-            <option value="port235">Chennai</option>
-            <option value="port776">JNPT / Mumbai</option>
-            <option value="port777">Mundra</option>
-          </select>
-        }
+        subtitle="XGBoost time-series forecasting - 24h, 48h & 72h congestion probability"
       />
+
+
+
 
       {/* Pressure state banner */}
       <div

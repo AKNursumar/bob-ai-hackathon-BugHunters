@@ -37,7 +37,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     heading: 'Overview',
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, to: '/' },
+      { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
     ],
   },
   {
@@ -58,7 +58,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     heading: 'Planning',
     items: [
-      { label: 'Optimisation', icon: Layers, to: '/optimisation' },
+      { label: 'Optimisation', icon: Layers, to: '/optimization' },
       { label: 'Simulation', icon: FlaskConical, to: '/simulation' },
     ],
   },
@@ -123,7 +123,7 @@ export function Sidebar({ isCollapsed, onToggle, isMobileOpen, onMobileClose }: 
             <CircleDot className="w-3 h-3 text-[#16A34A] shrink-0" />
             <div className="min-w-0">
               <p className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wider">System Live</p>
-              <p className="text-[10px] text-white/40 truncate">Los Angeles / Long Beach</p>
+              <p className="text-[10px] text-white/40 truncate">JNPA / Nhava Sheva</p>
             </div>
           </div>
         )}

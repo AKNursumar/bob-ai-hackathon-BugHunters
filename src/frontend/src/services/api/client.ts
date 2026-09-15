@@ -1,13 +1,17 @@
 /**
- * Shared API client for PortPulse backend.
+ * Shared API client for Harborline backend.
  *
- * All fetch calls go through here so we have a single place for:
- *   - base-URL resolution (proxied by Vite in dev, same-origin in prod)
- *   - consistent error parsing
- *   - typed helpers
+ * Base URL resolution:
+ *   - Development: empty string → Vite dev proxy forwards /api/* to 127.0.0.1:8001
+ *   - Production (Vercel): VITE_API_URL=https://harborline-backend.onrender.com
+ *     The full URL becomes https://harborline-backend.onrender.com/api/v1/...
+ *
+ * Set VITE_API_URL in your Vercel project environment variables.
+ * Never set it to localhost in production.
  */
 
-const BASE = '/api/v1';
+const _rawBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+const BASE = `${_rawBase}/api/v1`;
 
 export class ApiError extends Error {
   constructor(

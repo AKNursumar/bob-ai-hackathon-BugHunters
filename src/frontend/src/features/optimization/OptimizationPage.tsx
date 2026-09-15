@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Cpu, CheckCircle2, TrendingDown, Clock, ShieldCheck, Zap } from 'lucide-react';
+import { Cpu, CheckCircle2, TrendingDown, Clock, Zap, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { apiUrl } from '@/lib/apiUrl';
+import { usePort } from '@/contexts/PortContext';
 
 export function OptimizationPage() {
+  const { selectedPort } = usePort();
   const [horizon, setHorizon] = useState(72);
   const [timeoutSec, setTimeoutSec] = useState(30);
   const [isSolving, setIsSolving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
   const [metrics, setMetrics] = useState({
     baselineWaitingHours: 26.5,
     optimizedWaitingHours: 7.2,
@@ -21,10 +23,10 @@ export function OptimizationPage() {
     setIsSolving(true);
     setStatusMessage(null);
     try {
-      const res = await fetch('/api/v1/optimization/compare', {
+      const res = await fetch(apiUrl('/api/v1/optimization/compare'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ port_id: 'lalb', planning_horizon_hours: horizon, timeout_seconds: timeoutSec }),
+        body: JSON.stringify({ port_id: selectedPort.id, planning_horizon_hours: horizon, timeout_seconds: timeoutSec }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -39,10 +41,10 @@ export function OptimizationPage() {
         });
         setStatusMessage('Optimisation successfully solved using backend constraint engine.');
       } else {
-        setStatusMessage('Optimisation completed via built-in deterministic CP solver.');
+        setStatusMessage('Solver returned no results. Using pre-configured scenario metrics.');
       }
     } catch {
-      setStatusMessage('Optimisation completed using local high-performance CP heuristics.');
+      setStatusMessage('Backend offline. Using pre-configured scenario metrics.');
     } finally {
       setIsSolving(false);
     }
@@ -58,13 +60,16 @@ export function OptimizationPage() {
             onClick={handleRunOptimization}
             disabled={isSolving}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-bold text-white rounded-lg transition-all disabled:opacity-50"
-            style={{ background: '#071A2B' }}
+            style={{ background: 'linear-gradient(180deg, #1677c8, #115c9b)', border: '1px solid #1a88e5' }}
           >
             <Zap className={`w-4 h-4 ${isSolving ? 'animate-spin' : ''}`} />
             {isSolving ? 'Solving...' : 'Run Solver'}
           </button>
         }
       />
+
+
+
 
       {statusMessage && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-lg border" style={{ background: '#DCFCE7', borderColor: '#BBF7D0' }}>

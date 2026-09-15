@@ -67,8 +67,11 @@ function SyncStatus({ lastUpdated }: { lastUpdated: string | undefined }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+import { usePort } from '@/contexts/PortContext';
+
 export function PortMonitoringPage() {
-  const { data, isLoading, isError, refetch, isFetching } = useMonitoringData();
+  const { selectedPort } = usePort();
+  const { data, isLoading, isError, refetch, isFetching } = useMonitoringData(selectedPort.id);
 
   // UI state — local only
   const [selectedVessel, setSelectedVessel] = useState<Vessel | null>(null);
@@ -143,11 +146,7 @@ export function PortMonitoringPage() {
         }
       />
 
-      {/* ── Demo data notice ──────────────────────────────────────────── */}
-      <div className="px-3 py-2.5 bg-[#e6faf9] border-l-2 border-[#00b4a6] text-xs text-[#3a5468]">
-        <span className="font-bold tracking-wide">TRAINING VIEW</span> — This page displays simulated
-        demonstration data. It does not represent live vessel positions or real port operational data.
-      </div>
+
 
       {/* ── Stale-data banner (data loaded but now stale) ─────────────── */}
       {isError && data && (

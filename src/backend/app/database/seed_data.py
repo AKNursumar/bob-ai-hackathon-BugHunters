@@ -1,5 +1,5 @@
 """
-Seed realistic operational data for PortPulse (Port LALB).
+Seed realistic operational data for PortPulse (Port port776).
 Populates berths, cranes, vessels, and a fresh 72-hour arrival schedule.
 
 On every startup the vessel schedules are refreshed: any existing SCHEDULED
@@ -32,43 +32,52 @@ def seed_database(db: Session) -> None:
     """Seed initial operational entities and refresh vessel schedules."""
     try:
         # ----------------------------------------------------------------
-        # 1. Ensure LALB Port exists
+        # 1. Ensure Indian Ports exist
         # ----------------------------------------------------------------
-        lalb = db.query(Port).filter(Port.id == "lalb").first()
-        if not lalb:
-            lalb = Port(
-                id="lalb",
-                name="Los Angeles-Long Beach",
-                code="USLAX",
-                latitude=33.743184,
-                longitude=-118.267258,
-            )
-            db.add(lalb)
-            db.commit()
+        indian_ports_data = [
+            ("port776", "JNPA / Nhava Sheva", "INNSA", 18.9499, 72.9500),
+            ("port777", "Mundra", "INMUN", 22.7369, 69.7022),
+            ("port235", "Chennai", "INMAA", 13.0827, 80.2707),
+            ("port540", "Kandla", "INIXY", 23.0163, 70.2177),
+            ("port1367", "Visakhapatnam", "INVTZ", 17.6868, 83.2185),
+        ]
+        
+        for pid, pname, pcode, plat, plon in indian_ports_data:
+            port_entry = db.query(Port).filter(Port.id == pid).first()
+            if not port_entry:
+                port_entry = Port(
+                    id=pid,
+                    name=pname,
+                    code=pcode,
+                    latitude=plat,
+                    longitude=plon,
+                )
+                db.add(port_entry)
+        db.commit()
 
         # ----------------------------------------------------------------
-        # 2. Seed Berths (idempotent)
+        # 2. Seed Berths for Mundra (idempotent)
         # ----------------------------------------------------------------
-        if db.query(Berth).filter(Berth.port_id == "lalb").count() == 0:
+        if db.query(Berth).filter(Berth.port_id == "port777").count() == 0:
             berths = [
-                Berth(id="B1", port_id="lalb", name="Pier 400 - Berth 1 (Container)", capacity_teu=25000.0, status="AVAILABLE"),
-                Berth(id="B2", port_id="lalb", name="Pier G - Berth 2 (Container)",   capacity_teu=20000.0, status="AVAILABLE"),
-                Berth(id="B3", port_id="lalb", name="Pier J - Berth 3 (Container)",   capacity_teu=18000.0, status="AVAILABLE"),
-                Berth(id="B4", port_id="lalb", name="Pier T - Berth 4 (Bulk)",        capacity_tonnage=100000.0, status="AVAILABLE"),
-                Berth(id="B5", port_id="lalb", name="Pier B - Berth 5 (Tanker)",      capacity_tonnage=150000.0, status="AVAILABLE"),
+                Berth(id="B1", port_id="port777", name="Adani CT1 - Berth 1", capacity_teu=25000.0, status="AVAILABLE"),
+                Berth(id="B2", port_id="port777", name="Adani CT2 - Berth 2", capacity_teu=20000.0, status="AVAILABLE"),
+                Berth(id="B3", port_id="port777", name="Adani CT3 - Berth 3", capacity_teu=18000.0, status="AVAILABLE"),
+                Berth(id="B4", port_id="port777", name="Bulk Terminal - Berth 4", capacity_tonnage=100000.0, status="AVAILABLE"),
+                Berth(id="B5", port_id="port777", name="Liquid Terminal - Berth 5", capacity_tonnage=150000.0, status="AVAILABLE"),
             ]
             db.add_all(berths)
             db.commit()
-            logger.info("Seeded 5 berths for LALB")
+            logger.info("Seeded 5 berths for port777")
 
         # ----------------------------------------------------------------
-        # 3. Seed Cranes (idempotent)
+        # 3. Seed Cranes for Mundra (idempotent)
         # ----------------------------------------------------------------
-        if db.query(Crane).filter(Crane.port_id == "lalb").count() == 0:
+        if db.query(Crane).filter(Crane.port_id == "port777").count() == 0:
             cranes = [
                 Crane(
                     id=f"CR-{i:02d}",
-                    port_id="lalb",
+                    port_id="port777",
                     berth_id=f"B{((i - 1) // 2) + 1}",
                     name=f"Super Post-Panamax Crane {i}",
                     capacity_teu_per_hour=35.0,
@@ -78,21 +87,21 @@ def seed_database(db: Session) -> None:
             ]
             db.add_all(cranes)
             db.commit()
-            logger.info("Seeded 10 cranes for LALB")
+            logger.info("Seeded 10 cranes for port777")
 
         # ----------------------------------------------------------------
-        # 4. Seed Vessels (idempotent)
+        # 4. Seed Vessels for Mundra (idempotent)
         # ----------------------------------------------------------------
         if db.query(Vessel).count() == 0:
             vessels = [
-                Vessel(id="V-101", vessel_name="Ever Given",          vessel_type="Container", port_id="lalb", capacity=20124.0, length_m=400.0, beam_m=58.8, draft_m=15.7),
-                Vessel(id="V-102", vessel_name="Maersk Mc-Kinney",    vessel_type="Container", port_id="lalb", capacity=18270.0, length_m=399.0, beam_m=59.0, draft_m=16.0),
-                Vessel(id="V-103", vessel_name="CMA CGM Marco Polo",  vessel_type="Container", port_id="lalb", capacity=16020.0, length_m=396.0, beam_m=53.6, draft_m=15.8),
-                Vessel(id="V-104", vessel_name="MSC Oscar",           vessel_type="Container", port_id="lalb", capacity=19224.0, length_m=395.0, beam_m=59.0, draft_m=16.0),
-                Vessel(id="V-105", vessel_name="OOCL Hong Kong",      vessel_type="Container", port_id="lalb", capacity=21413.0, length_m=399.0, beam_m=58.8, draft_m=16.0),
-                Vessel(id="V-106", vessel_name="Cosco Universe",      vessel_type="Container", port_id="lalb", capacity=21237.0, length_m=400.0, beam_m=58.6, draft_m=16.0),
-                Vessel(id="V-107", vessel_name="Nordic Saturn",       vessel_type="Tanker",    port_id="lalb", capacity=150000.0, length_m=274.0, beam_m=48.0, draft_m=14.5),
-                Vessel(id="V-108", vessel_name="Golden Enterprise",   vessel_type="Bulk",      port_id="lalb", capacity=82000.0,  length_m=229.0, beam_m=32.2, draft_m=14.0),
+                Vessel(id="V-101", vessel_name="Ever Given",          vessel_type="Container", port_id="port777", capacity=20124.0, length_m=400.0, beam_m=58.8, draft_m=15.7),
+                Vessel(id="V-102", vessel_name="Maersk Mc-Kinney",    vessel_type="Container", port_id="port777", capacity=18270.0, length_m=399.0, beam_m=59.0, draft_m=16.0),
+                Vessel(id="V-103", vessel_name="CMA CGM Marco Polo",  vessel_type="Container", port_id="port777", capacity=16020.0, length_m=396.0, beam_m=53.6, draft_m=15.8),
+                Vessel(id="V-104", vessel_name="MSC Oscar",           vessel_type="Container", port_id="port777", capacity=19224.0, length_m=395.0, beam_m=59.0, draft_m=16.0),
+                Vessel(id="V-105", vessel_name="OOCL Hong Kong",      vessel_type="Container", port_id="port777", capacity=21413.0, length_m=399.0, beam_m=58.8, draft_m=16.0),
+                Vessel(id="V-106", vessel_name="Cosco Universe",      vessel_type="Container", port_id="port777", capacity=21237.0, length_m=400.0, beam_m=58.6, draft_m=16.0),
+                Vessel(id="V-107", vessel_name="Nordic Saturn",       vessel_type="Tanker",    port_id="port777", capacity=150000.0, length_m=274.0, beam_m=48.0, draft_m=14.5),
+                Vessel(id="V-108", vessel_name="Golden Enterprise",   vessel_type="Bulk",      port_id="port777", capacity=82000.0,  length_m=229.0, beam_m=32.2, draft_m=14.0),
             ]
             db.add_all(vessels)
             db.commit()
@@ -100,10 +109,6 @@ def seed_database(db: Session) -> None:
 
         # ----------------------------------------------------------------
         # 5. Refresh vessel schedules every startup
-        #
-        # Delete SCHEDULED entries whose ETA is in the past, then re-seed
-        # all slots relative to *now* if the window is partially or fully
-        # stale (i.e., fewer than 4 future SCHEDULED rows remain).
         # ----------------------------------------------------------------
         _refresh_schedules(db)
 
@@ -113,15 +118,13 @@ def seed_database(db: Session) -> None:
 
 
 def _refresh_schedules(db: Session) -> None:
-    """Remove stale LALB SCHEDULED entries and re-seed if needed."""
-    # Use naive UTC to match what SQLite stores (no tzinfo on stored datetimes)
+    """Remove stale port777 SCHEDULED entries and re-seed if needed."""
     now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
 
-    # Count how many SCHEDULED rows are still in the future
     future_count = (
         db.query(VesselSchedule)
         .filter(
-            VesselSchedule.port_id == "lalb",
+            VesselSchedule.port_id == "port777",
             VesselSchedule.status == "SCHEDULED",
             VesselSchedule.eta > now_naive,
         )
@@ -129,12 +132,10 @@ def _refresh_schedules(db: Session) -> None:
     )
 
     if future_count >= 4:
-        # Enough active schedules — nothing to do
         return
 
-    # Remove all SCHEDULED entries (past and future) and re-seed fresh ones
     db.query(VesselSchedule).filter(
-        VesselSchedule.port_id == "lalb",
+        VesselSchedule.port_id == "port777",
         VesselSchedule.status == "SCHEDULED",
     ).delete(synchronize_session=False)
     db.commit()
@@ -142,8 +143,8 @@ def _refresh_schedules(db: Session) -> None:
     schedules = [
         VesselSchedule(
             vessel_id=vessel_id,
-            port_id="lalb",
-            eta=now_naive + timedelta(hours=offset_h),  # naive UTC
+            port_id="port777",
+            eta=now_naive + timedelta(hours=offset_h),
             expected_service_duration_hours=svc_h,
             priority=priority,
             status="SCHEDULED",
@@ -152,4 +153,4 @@ def _refresh_schedules(db: Session) -> None:
     ]
     db.add_all(schedules)
     db.commit()
-    logger.info(f"Refreshed {len(schedules)} vessel schedules for LALB (72-hour window)")
+    logger.info(f"Refreshed {len(schedules)} vessel schedules for port777 (72-hour window)")

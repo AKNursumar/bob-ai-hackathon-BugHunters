@@ -201,7 +201,7 @@ def test_mcp_tool_call_get_port_status():
     client.get("/api/v1/ports")
     response = client.post(
         "/api/v1/mcp/tools/get_port_status",
-        json={"arguments": {"port_id": "lalb"}},
+        json={"arguments": {"port_id": "port776"}},
     )
     assert response.status_code == 200
     data = response.json()
@@ -222,12 +222,12 @@ def test_mcp_tool_call_missing_arguments():
 
 
 def test_mcp_tool_get_vessel_schedule():
-    """get_vessel_schedule returns a vessel list for lalb."""
+    """get_vessel_schedule returns a vessel list for port776."""
     # Ensure ports are seeded
     client.get("/api/v1/ports")
     response = client.post(
         "/api/v1/mcp/tools/get_vessel_schedule",
-        json={"arguments": {"port_id": "lalb", "horizon_hours": 72}},
+        json={"arguments": {"port_id": "port776", "horizon_hours": 72}},
     )
     assert response.status_code == 200
     data = response.json()
@@ -237,11 +237,11 @@ def test_mcp_tool_get_vessel_schedule():
 
 
 def test_mcp_tool_get_berth_status():
-    """get_berth_status returns berth list for lalb."""
+    """get_berth_status returns berth list for port776."""
     client.get("/api/v1/ports")
     response = client.post(
         "/api/v1/mcp/tools/get_berth_status",
-        json={"arguments": {"port_id": "lalb"}},
+        json={"arguments": {"port_id": "port776"}},
     )
     assert response.status_code == 200
     data = response.json()
@@ -250,11 +250,11 @@ def test_mcp_tool_get_berth_status():
 
 
 def test_mcp_tool_get_crane_status():
-    """get_crane_status returns crane list for lalb."""
+    """get_crane_status returns crane list for port776."""
     client.get("/api/v1/ports")
     response = client.post(
         "/api/v1/mcp/tools/get_crane_status",
-        json={"arguments": {"port_id": "lalb"}},
+        json={"arguments": {"port_id": "port776"}},
     )
     assert response.status_code == 200
     data = response.json()

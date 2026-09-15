@@ -1,7 +1,7 @@
 /**
  * DEMO DATA — Not real operational data.
  * This is simulated data for development and demonstration purposes only.
- * It does not represent live Port of Los Angeles / Long Beach data.
+ * It does not represent live Port of JNPA / Nhava Sheva data.
  *
  * Replace this file with a real API service when the backend is available.
  */
@@ -96,7 +96,7 @@ const MOCK_OPERATIONS_SUMMARY: OperationsSummary = {
 
 const MOCK_DASHBOARD_SUMMARY: DashboardSummary = {
   lastUpdated: new Date().toISOString(),
-  portName: 'Los Angeles / Long Beach',
+  portName: 'JNPA / Nhava Sheva',
   systemStatus: 'live',
   kpis: {
     activeVessels: {

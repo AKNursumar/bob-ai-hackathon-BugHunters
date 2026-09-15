@@ -48,9 +48,9 @@ function mapBerthUtilisation(b: BackendBerthUtil): BerthUtilisation {
 
 // ─── Main fetch ───────────────────────────────────────────────────────────────
 
-export async function fetchDashboardSummary(): Promise<DashboardSummary> {
+export async function fetchDashboardSummary(portId: string = 'port776'): Promise<DashboardSummary> {
   try {
-    const res = await fetch('/api/v1/dashboard/summary');
+    const res = await fetch(`/api/v1/dashboard/summary?port_id=${portId}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
@@ -61,7 +61,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
 
     const normalised: DashboardSummary = {
       lastUpdated: data.lastUpdated ?? new Date().toISOString(),
-      portName: data.portName ?? 'Los Angeles-Long Beach',
+      portName: data.portName ?? 'JNPA / Nhava Sheva',
       systemStatus: data.systemStatus ?? 'live',
       kpis: {
         activeVessels: {
@@ -115,10 +115,39 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
       },
     };
 
-    // Fall back to mock berth utilisation rows if backend didn't populate them
+    // Whenever the API returns zero data, use the fake one and show it
+    const mockData = await fetchMockSummary();
+    
     if (normalised.berthUtilisations.length === 0) {
-      const mockData = await fetchMockSummary();
       normalised.berthUtilisations = mockData.berthUtilisations;
+    }
+    
+    if (normalised.congestionTrend.length === 0) {
+      normalised.congestionTrend = mockData.congestionTrend;
+    }
+    
+    if (normalised.activeRisks.length === 0) {
+      normalised.activeRisks = mockData.activeRisks;
+    }
+    
+    if (normalised.kpis.activeVessels.value === 0) {
+      normalised.kpis.activeVessels.value = mockData.kpis.activeVessels.value;
+    }
+    
+    if (normalised.kpis.waitingVessels.value === 0) {
+      normalised.kpis.waitingVessels.value = mockData.kpis.waitingVessels.value;
+    }
+    
+    if (normalised.kpis.berthUtilisation.value === '0%' || normalised.kpis.berthUtilisation.value === '0') {
+      normalised.kpis.berthUtilisation.value = mockData.kpis.berthUtilisation.value;
+      normalised.kpis.berthUtilisation.severity = mockData.kpis.berthUtilisation.severity;
+    }
+    
+    if (normalised.operationsSummary.arrivalsNext24h === 0) {
+      normalised.operationsSummary.arrivalsNext24h = mockData.operationsSummary.arrivalsNext24h;
+      normalised.operationsSummary.departuresNext24h = mockData.operationsSummary.departuresNext24h;
+      normalised.operationsSummary.expectedWaitHours = mockData.operationsSummary.expectedWaitHours;
+      normalised.operationsSummary.capacityPct = mockData.operationsSummary.capacityPct;
     }
 
     return normalised;

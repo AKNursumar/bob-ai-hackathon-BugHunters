@@ -10,7 +10,7 @@
 
 team:
   name: "BugHunters"
-  track: "AI"
+  track: "Logistics/Port"
   lead:
     name: "Aubaid Ahmed Saiyed"
     email: "24dit063@charusat.edu.in"
@@ -26,47 +26,52 @@ submission:
   title: "Harborline"
 
   problem_statement: >
-    Port operators and shift supervisors often react to congestion only after
-    vessel queues and delays have already formed. Changing vessel arrivals,
-    berth availability, and port capacity make it difficult to anticipate
-    congestion, understand what is driving it, and make timely operational
-    decisions.
+    Port operators and shift supervisors at India's major ports — JNPA/Nhava Sheva,
+    Mundra, Chennai, Kandla, and Visakhapatnam — react to congestion only after
+    vessel queues and delays have already formed. Dynamic arrivals, limited berth
+    visibility, and fragmented tooling make it impossible to anticipate congestion
+    pressure, understand its causes, or act before the situation deteriorates.
 
   solution_summary: >
-    PORTPULSE AI combines historical port activity with live vessel intelligence
-    to forecast congestion risk 24, 48, and 72 hours ahead. It explains the
-    factors behind the forecast and combines predicted congestion pressure with
-    current operational conditions to simulate disruptions, optimise schedules,
-    and generate an actionable 72-hour operating plan through IBM Bob.
+    Harborline is an AI-powered port operations intelligence platform that combines
+    live AIS vessel tracking with XGBoost congestion forecasting to predict port
+    pressure 24, 48, and 72 hours ahead across India's five major ports. It explains
+    the drivers behind each forecast, optimises vessel-berth-crane schedules using
+    Google OR-Tools CP-SAT, simulates operational disruptions, and generates
+    actionable 72-hour operating plans through IBM Bob via Model Context Protocol.
 
   key_features:
-    - "24/48/72-hour AI congestion forecasting with risk scores and risk trajectories"
-    - "Real-time vessel and port monitoring using live AIS intelligence"
-    - "Congestion intelligence with risk drivers and activity anomalies"
-    - "What-if simulation and operational schedule optimisation"
-    - "IBM Bob operations assistant for natural-language analysis and 72-hour planning"
+    - "24/48/72-hour XGBoost congestion forecasting with risk scores, drivers, and trajectories — trained on IMF PortWatch Indian port data"
+    - "Real-time AIS vessel tracking across JNPA, Mundra, Chennai, Kandla, and Visakhapatnam via AISStream.io"
+    - "Google OR-Tools CP-SAT vessel-berth-crane schedule optimisation with greedy fallback"
+    - "What-if scenario simulation for vessel delays and crane unavailability"
+    - "IBM Bob operations assistant via MCP — natural-language port queries, risk explanations, and 72-hour plan generation"
 
   tech_stack:
     languages: ["Python", "TypeScript", "JavaScript"]
     frameworks: ["FastAPI", "React", "Vite"]
-    ibm_technologies: ["IBM Bob", "watsonx.ai", "IBM Cloud"]
-    databases: ["PostgreSQL"]
-    other: ["XGBoost", "scikit-learn", "OR-Tools", "AISStream", "IMF PortWatch", "MCP", "Docker", "GitHub"]
+    ibm_technologies: ["IBM Bob", "watsonx.ai"]
+    databases: ["SQLite", "PostgreSQL"]
+    other: ["XGBoost", "scikit-learn", "Google OR-Tools", "AISStream.io", "IMF PortWatch", "MCP (Model Context Protocol)", "Render", "Vercel"]
 
   what_we_are_most_proud_of: >
-    PORTPULSE AI connects prediction with operational decision-making instead
-    of stopping at a congestion dashboard. The system uses real port activity
-    data to forecast congestion pressure ahead of time, exposes the factors
-    behind the prediction, and makes that intelligence available to the
-    optimisation and IBM Bob workflow.
+    Harborline closes the loop from prediction to action. The ML model forecasts
+    congestion pressure ahead of time using real IMF PortWatch data, the explanation
+    layer surfaces which features are driving the risk, and that intelligence feeds
+    directly into the OR-Tools schedule optimiser and IBM Bob MCP workflow. A port
+    operator can go from seeing a HIGH-risk 48h forecast to generating a
+    conflict-free 72-hour vessel-berth-crane operating plan entirely within one
+    interface — through natural language via IBM Bob if needed. No other system
+    in the Indian port operations space integrates all five of these capabilities.
 
   known_limitations: >
-    The current ML model provides port-level congestion pressure forecasting
-    rather than individual berth-level congestion prediction because consistent
-    historical berth, crane, and vessel-level operational data is not publicly
-    available across all target ports. Some operational resource information
-    therefore depends on currently available port data and configured
-    operational constraints.
+    The XGBoost model provides port-level congestion pressure forecasting rather
+    than individual berth-level prediction — consistent historical berth-level data
+    is not publicly available across all five target Indian ports. Live AIS vessel
+    tracking requires an AISSTREAM_API_KEY environment variable; without it, vessel
+    counts show zero while all forecasting, optimisation, and planning features
+    remain fully functional. OR-Tools is an optional dependency — the optimisation
+    engine uses a deterministic greedy fallback automatically if not installed.
 
 # =============================================================================
 # ARTIFACT LOCATIONS

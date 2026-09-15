@@ -55,7 +55,7 @@ async def call_mcp_tool(tool_name: str, request: MCPToolCallRequest):
 
     Request body::
 
-        { "arguments": { "port_id": "lalb" } }
+        { "arguments": { "port_id": "port776" } }
 
     Returns ``{"success": true, ...}`` on success.
     Returns ``404`` if the tool name is unknown.

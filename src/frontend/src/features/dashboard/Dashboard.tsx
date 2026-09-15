@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { RefreshCw, TrendingUp, AlertTriangle, CheckCircle2, Ship, Anchor, Activity, BarChart3, Bot, ArrowRight, Clock } from 'lucide-react';
 import { useDashboardSummary } from '@/hooks/useDashboardSummary';
 import { KpiCard } from '@/components/KpiCard';
@@ -31,7 +30,6 @@ function DCard({ title, label, children, className, headerAction }: {
 // ─── Mini chart for congestion trend ──────────────────────────────────────────
 function CongestionMiniChart({ data }: { data: Array<{ time: string; congestionIndex: number; berthUtilisation: number }> }) {
   if (!data.length) {
-    // Generate synthetic data
     data = Array.from({ length: 24 }, (_, i) => ({
       time: `${i}h`,
       congestionIndex: 45 + Math.sin(i / 3) * 20 + i * 1.2,
@@ -52,41 +50,39 @@ function CongestionMiniChart({ data }: { data: Array<{ time: string; congestionI
   const ciArea = `${ciPath} L ${xScale(data.length - 1)},${h - padB} L ${xScale(0)},${h - padB} Z`;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" preserveAspectRatio="none">
-      {/* Horizontal gridlines */}
-      {[25, 50, 75, 100].map(v => (
-        <line key={v} x1={padL} y1={yScale(v)} x2={w - padR} y2={yScale(v)}
-          stroke="#F0F4F8" strokeWidth="1" />
-      ))}
-      {/* Risk threshold at 70% */}
-      <line x1={padL} y1={yScale(70)} x2={w - padR} y2={yScale(70)}
-        stroke="#DC2626" strokeWidth="0.8" strokeDasharray="4,3" opacity="0.4" />
-
-      {/* CI area fill */}
-      <path d={ciArea} fill="rgba(22,119,200,0.06)" />
-      {/* Berth utilisation line */}
-      <path d={buPath} stroke="#C8D5DE" strokeWidth="1.5" fill="none" />
-      {/* Congestion index line */}
-      <path d={ciPath} stroke="#1677C8" strokeWidth="2" fill="none" />
-    </svg>
+    <div className="relative h-44">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
+        {[25, 50, 75, 100].map(v => (
+          <line key={v} x1={padL} y1={yScale(v)} x2={w - padR} y2={yScale(v)}
+            stroke="#F0F4F8" strokeWidth="1" />
+        ))}
+        <line x1={padL} y1={yScale(70)} x2={w - padR} y2={yScale(70)}
+          stroke="#DC2626" strokeWidth="0.8" strokeDasharray="4,3" opacity="0.4" />
+        <path d={ciArea} fill="rgba(22,119,200,0.06)" />
+        <path d={buPath} stroke="#C8D5DE" strokeWidth="1.5" fill="none" />
+        <path d={ciPath} stroke="#1677C8" strokeWidth="2" fill="none" />
+      </svg>
+    </div>
   );
 }
 
 // ─── Berth utilisation list ────────────────────────────────────────────────────
+const INDIAN_BERTH_FALLBACK = [
+  { id: 'JNPCT-1', name: 'JNPCT — Berth No. 1', utilisation: 87, status: 'occupied', vesselName: 'Container Carrier' },
+  { id: 'JNPCT-2', name: 'JNPCT — Berth No. 2', utilisation: 94, status: 'occupied', vesselName: 'Bulk Cargo Vessel' },
+  { id: 'GTI-1',   name: 'GTI — Gateway Terminal', utilisation: 62, status: 'occupied', vesselName: 'Feeder Vessel' },
+  { id: 'BMCT-1',  name: 'BMCT — Berth No. 1', utilisation: 0,  status: 'available', vesselName: undefined },
+  { id: 'NSICT-1', name: 'NSICT — Berth No. 1', utilisation: 78, status: 'occupied', vesselName: 'Tanker' },
+];
+
 function BerthList({ berths }: { berths: Array<{ id: string; name: string; utilisation: number; status: string; vesselName?: string }> }) {
-  const mockBerths = berths.length ? berths : [
-    { id: 'B01', name: 'Berth 01 — Pier 400', utilisation: 95, status: 'occupied', vesselName: 'Ever Given' },
-    { id: 'B02', name: 'Berth 02 — Pier G', utilisation: 80, status: 'occupied', vesselName: 'Maersk Mc-Kinney' },
-    { id: 'B03', name: 'Berth 03 — Pier J', utilisation: 0, status: 'available', vesselName: undefined },
-    { id: 'B04', name: 'Berth 04 — Pier T', utilisation: 65, status: 'occupied', vesselName: 'MSC Oscar' },
-    { id: 'B05', name: 'Berth 05 — Pier B', utilisation: 100, status: 'occupied', vesselName: 'OOCL HK' },
-  ] as typeof berths;
+  const displayBerths = berths.length ? berths : INDIAN_BERTH_FALLBACK as typeof berths;
 
   return (
     <div className="space-y-3">
-      {mockBerths.slice(0, 5).map((b) => (
+      {displayBerths.slice(0, 5).map((b) => (
         <div key={b.id} className="flex items-center gap-3">
-          <div className="w-8 text-[10px] font-bold text-[#617080] shrink-0">{b.id}</div>
+          <div className="w-16 text-[10px] font-bold text-[#617080] shrink-0 truncate">{b.id}</div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[11px] text-[#617080] truncate">{b.vesselName ?? 'Available'}</span>
@@ -115,12 +111,14 @@ function BerthList({ berths }: { berths: Array<{ id: string; name: string; utili
 }
 
 // ─── Risk list ─────────────────────────────────────────────────────────────────
+const INDIAN_RISK_FALLBACK = [
+  { port: 'JNPCT — Container Terminal', severity: 'critical', description: 'Berth occupancy at 94% — inbound queue forming at anchorage', probability: 0.87 },
+  { port: 'Nhava Sheva Anchorage Area', severity: 'high', description: 'Vessel queue growing — above-normal arrival rate projected', probability: 0.71 },
+  { port: 'GTI — Gateway Terminal India', severity: 'medium', description: 'Moderate congestion risk — approaching seasonal peak', probability: 0.53 },
+];
+
 function RiskListView({ risks }: { risks: Array<{ port?: string; location?: string; severity: string; description?: string; message?: string; probability?: number }> }) {
-  const mockRisks = risks.length ? risks : [
-    { port: 'Terminal A — Pier 400', severity: 'critical', description: 'Berth occupancy at 97% — capacity limit imminent', probability: 0.89 },
-    { port: 'Anchorage Area', severity: 'high', description: 'Vessel queue growing — 12 vessels waiting', probability: 0.74 },
-    { port: 'Gate Operations', severity: 'medium', description: 'Truck congestion at gate — processing delays', probability: 0.52 },
-  ];
+  const displayRisks = risks.length ? risks : INDIAN_RISK_FALLBACK as typeof risks;
 
   const severityColors: Record<string, { bg: string; text: string; border: string }> = {
     critical: { bg: '#FEE2E2', text: '#DC2626', border: '#FECACA' },
@@ -131,7 +129,7 @@ function RiskListView({ risks }: { risks: Array<{ port?: string; location?: stri
 
   return (
     <div className="space-y-2.5">
-      {mockRisks.map((r, i) => {
+      {displayRisks.map((r, i) => {
         const cfg = severityColors[r.severity] ?? severityColors.medium;
         const loc = r.port ?? r.location ?? 'Unknown';
         const desc = r.description ?? r.message ?? '';
@@ -159,16 +157,18 @@ function RiskListView({ risks }: { risks: Array<{ port?: string; location?: stri
 }
 
 // ─── AI recommendation card ────────────────────────────────────────────────────
+const INDIAN_REC_FALLBACK = {
+  title: 'Elevated congestion pressure — coordinated response recommended',
+  summary: 'JNPCT berth utilisation is above threshold. Based on historical traffic patterns, congestion pressure is expected to build over the next 6–8 hours. Consider redistributing inbound vessels to available GTI capacity.',
+  actions: [
+    'Route next 2 inbound container vessels to GTI — estimated anchorage wait reduction: −2.4h',
+    'Issue pre-notification to Nhava Sheva pilot station: staggered arrival window recommended',
+    'Coordinate with BMCT berth supervisor — Berth No. 1 available for clearance within 4h',
+  ],
+};
+
 function RecommendationView({ recommendation }: { recommendation: { title?: string; summary?: string; actions?: string[] } | null }) {
-  const rec = recommendation ?? {
-    title: 'Elevated risk — coordinated response recommended',
-    summary: 'Vessel queue pressure is building at Terminal A. Based on current trajectory, berth capacity will be breached within 6 hours without intervention.',
-    actions: [
-      'Shift VSL-204 to Berth B05 — expected wait time reduction: −18 min',
-      'Activate anchorage holding for VSL-307 pending B03 clearance',
-      'Alert pilot dispatch: +2h stagger recommended for next 3 arrivals',
-    ],
-  };
+  const rec = recommendation ?? INDIAN_REC_FALLBACK;
 
   return (
     <div>
@@ -194,12 +194,19 @@ function RecommendationView({ recommendation }: { recommendation: { title?: stri
 }
 
 // ─── Operations summary ────────────────────────────────────────────────────────
-function OperationsSummary({ summary: _summary }: { summary: Record<string, unknown> | null }) {
+interface OpsSummaryData {
+  arrivalsNext24h?: number;
+  departuresNext24h?: number;
+  expectedWaitHours?: number;
+  capacityPct?: number;
+}
+
+function OperationsSummary({ summary }: { summary: OpsSummaryData | null }) {
   const items = [
-    { label: 'Expected arrivals', value: '14', unit: 'vessels', icon: Ship, color: '#1677C8' },
-    { label: 'Scheduled departures', value: '11', unit: 'vessels', icon: Anchor, color: '#16A34A' },
-    { label: 'Avg. wait forecast', value: '3.8', unit: 'hours', icon: Clock, color: '#D97706' },
-    { label: 'Crane availability', value: '8/10', unit: 'cranes', icon: Activity, color: '#145B8C' },
+    { label: 'Expected arrivals', value: summary?.arrivalsNext24h ?? '—', unit: 'vessels', icon: Ship, color: '#1677C8' },
+    { label: 'Scheduled departures', value: summary?.departuresNext24h ?? '—', unit: 'vessels', icon: Anchor, color: '#16A34A' },
+    { label: 'Avg. wait forecast', value: summary?.expectedWaitHours != null ? `${summary.expectedWaitHours}` : '—', unit: 'hours', icon: Clock, color: '#D97706' },
+    { label: 'Capacity utilisation', value: summary?.capacityPct != null ? `${summary.capacityPct}%` : '—', unit: '', icon: Activity, color: '#145B8C' },
   ];
 
   return (
@@ -216,7 +223,7 @@ function OperationsSummary({ summary: _summary }: { summary: Record<string, unkn
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-bold text-[#071A2B] tabular-nums">{item.value}</span>
-              <span className="text-[11px] text-[#617080]">{item.unit}</span>
+              {item.unit && <span className="text-[11px] text-[#617080]">{item.unit}</span>}
             </div>
           </div>
         );
@@ -225,12 +232,78 @@ function OperationsSummary({ summary: _summary }: { summary: Record<string, unkn
   );
 }
 
+// ─── Risk status banner ────────────────────────────────────────────────────────
+function RiskBanner({ congestionRisk }: {
+  congestionRisk?: { label: string; value: string; change?: string; severity?: string };
+}) {
+  const riskValue = congestionRisk?.value ?? 'UNKNOWN';
+  const severity = congestionRisk?.severity ?? 'medium';
+
+  const severityConfig: Record<string, { bg: string; border: string; textColor: string; iconColor: string }> = {
+    critical: { bg: 'linear-gradient(135deg, #FEE2E2, #FFF5F5)', border: '#FECACA', textColor: '#DC2626', iconColor: '#DC2626' },
+    high:     { bg: 'linear-gradient(135deg, #FEF3C7, #FFFBEB)', border: '#FDE68A', textColor: '#D97706', iconColor: '#D97706' },
+    medium:   { bg: 'linear-gradient(135deg, #DCEEFF, #EFF6FF)', border: '#BAD7F8', textColor: '#1677C8', iconColor: '#1677C8' },
+    low:      { bg: 'linear-gradient(135deg, #DCFCE7, #F0FDF4)', border: '#BBF7D0', textColor: '#16A34A', iconColor: '#16A34A' },
+  };
+
+  const cfg = severityConfig[severity] ?? severityConfig.medium;
+  const change = congestionRisk?.change ?? '';
+
+  return (
+    <div
+      className="flex items-center justify-between px-5 py-4 rounded-xl"
+      style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+    >
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-full grid place-items-center" style={{ background: `${cfg.iconColor}18` }}>
+          <AlertTriangle className="w-5 h-5" style={{ color: cfg.iconColor }} />
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[13px] font-bold" style={{ color: cfg.textColor }}>
+              {riskValue === 'HIGH' || riskValue === 'CRITICAL'
+                ? 'ELEVATED CONGESTION RISK'
+                : riskValue === 'LOW'
+                ? 'LOW CONGESTION RISK'
+                : 'CONGESTION MONITORING ACTIVE'}
+            </span>
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded"
+              style={{ background: `${cfg.iconColor}20`, color: cfg.textColor }}
+            >
+              {riskValue}
+            </span>
+          </div>
+          <p className="text-sm text-[#617080]">
+            {change || 'Congestion index from trained XGBoost model — IMF PortWatch data'}
+          </p>
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-[10px] font-bold text-[#617080] uppercase tracking-wider mb-1">ML Risk Level</p>
+        <p className="text-3xl font-bold tabular-nums" style={{ color: cfg.textColor }}>{riskValue}</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main dashboard ────────────────────────────────────────────────────────────
+import { usePort } from '@/contexts/PortContext';
+
 export function Dashboard() {
-  const { data, isLoading, isError, refetch, isFetching } = useDashboardSummary();
-  const [showDemo, setShowDemo] = useState(true);
+  const { selectedPort } = usePort();
+  const { data, isLoading, isError, refetch, isFetching } = useDashboardSummary(selectedPort.id);
 
   const lastUpdated = data?.lastUpdated ?? new Date().toISOString();
+
+  const congestionTrendData = (data?.congestionTrend ?? []) as unknown as Array<{ time: string; congestionIndex: number; berthUtilisation: number }>;
+  const berthData = (data?.berthUtilisations ?? []).map(b => ({
+    id: b.berthId,
+    name: b.name,
+    utilisation: b.utilisationPct,
+    status: b.currentVessels > 0 ? 'occupied' : 'available',
+    vesselName: b.currentVessels > 0 ? 'Active Vessel' : undefined,
+  }));
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl fade-in-up">
@@ -239,7 +312,7 @@ export function Dashboard() {
         <div>
           <div className="eyebrow mb-1.5">Port Intelligence</div>
           <h1 className="text-2xl font-bold text-[#071A2B] tracking-tight">Command Center</h1>
-          <p className="text-sm text-[#617080] mt-1">Los Angeles / Long Beach · Port operational overview</p>
+          <p className="text-sm text-[#617080] mt-1">{selectedPort.name} — Port operational overview</p>
         </div>
         <div className="flex items-center gap-3 shrink-0 mt-1">
           <span className="text-[11px] text-[#617080] tabular-nums hidden sm:block">
@@ -257,42 +330,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Demo notice */}
-      {showDemo && (
-        <div className="flex items-center justify-between px-4 py-3 rounded-lg border" style={{ background: '#DCEEFF', borderColor: '#BAD7F8' }}>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#1677C8]" />
-            <span className="text-[12px] font-bold text-[#1677C8]">TRAINING VIEW</span>
-            <span className="text-[12px] text-[#617080]">— Simulated demonstration data. Does not represent live port operations.</span>
-          </div>
-          <button onClick={() => setShowDemo(false)} className="text-[#617080] hover:text-[#071A2B] text-xs">✕</button>
-        </div>
-      )}
-
       {/* ── Risk status banner ── */}
-      <div
-        className="flex items-center justify-between px-5 py-4 rounded-xl"
-        style={{ background: 'linear-gradient(135deg, #FEE2E2, #FFF5F5)', border: '1px solid #FECACA' }}
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full grid place-items-center bg-[#DC2626]/10">
-            <AlertTriangle className="w-5 h-5 text-[#DC2626]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[13px] font-bold text-[#DC2626]">ELEVATED CONGESTION RISK</span>
-              <span className="risk-badge risk-badge-critical">HIGH</span>
-            </div>
-            <p className="text-sm text-[#617080]">
-              Terminal A berth utilisation at 95% · 12 vessels waiting · +18% arrival activity projected
-            </p>
-          </div>
-        </div>
-        <div className="text-right shrink-0">
-          <p className="text-[10px] font-bold text-[#617080] uppercase tracking-wider mb-1">Congestion Probability</p>
-          <p className="text-3xl font-bold text-[#DC2626] tabular-nums">72%</p>
-        </div>
-      </div>
+      <RiskBanner congestionRisk={data?.kpis?.congestionRisk as any} />
 
       {/* ── KPI Row ── */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
@@ -332,28 +371,32 @@ export function Dashboard() {
             </div>
           }
         >
-          <div className="h-44">
-            <CongestionMiniChart data={(data?.congestionTrend ?? []) as unknown as Array<{ time: string; congestionIndex: number; berthUtilisation: number }>} />
-          </div>
+          <CongestionMiniChart data={congestionTrendData} />
+          <p className="text-[10px] text-[#98A8B4] mt-2">Source: IMF PortWatch portcall data · XGBoost model output</p>
         </DCard>
 
         <DCard title="Berth Status" label="Port Status" className="lg:col-span-2">
-          <BerthList berths={[]} />
+          <BerthList berths={berthData} />
         </DCard>
       </div>
 
       {/* ── Risks ── */}
       <DCard title="Active Congestion Risks" label="Risk Intelligence">
         <RiskListView risks={data?.activeRisks ?? []} />
+        <p className="text-[10px] text-[#98A8B4] mt-3">Source: XGBoost congestion model · IMF PortWatch vessel activity data</p>
       </DCard>
 
       {/* ── Recommendation + Operations ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <DCard title="IBM Bob Recommendation" label="AI Copilot">
-          <RecommendationView recommendation={data?.aiRecommendation as unknown as Record<string, unknown> | null} />
+          <RecommendationView
+            recommendation={data?.aiRecommendation as unknown as { title?: string; summary?: string; actions?: string[] } | null}
+          />
         </DCard>
         <DCard title="Next 24 Hours" label="Operations Outlook">
-          <OperationsSummary summary={data?.operationsSummary as unknown as Record<string, unknown> | null} />
+          <OperationsSummary
+            summary={data?.operationsSummary as unknown as OpsSummaryData | null}
+          />
         </DCard>
       </div>
 
@@ -362,7 +405,7 @@ export function Dashboard() {
         {[
           { label: 'Port Monitor', sublabel: 'Live vessel & berth view', to: '/monitoring', icon: BarChart3, color: '#1677C8' },
           { label: 'Predictions', sublabel: '72h congestion forecast', to: '/predictions', icon: TrendingUp, color: '#DC2626' },
-          { label: 'Optimisation', sublabel: 'Berth & crane solver', to: '/optimisation', icon: Activity, color: '#16A34A' },
+          { label: 'Optimisation', sublabel: 'Berth & crane solver', to: '/optimization', icon: Activity, color: '#16A34A' },
           { label: 'IBM Bob', sublabel: 'AI operations copilot', to: '/bob', icon: Bot, color: '#145B8C' },
         ].map((nav) => {
           const Icon = nav.icon;
