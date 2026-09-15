@@ -28,3 +28,6 @@ pipeline can locate it reliably.
 - One idea per slide
 - Font size minimum 24pt for readability
 - Do not paste large code blocks into slides — reference the repo instead
+
+
+
