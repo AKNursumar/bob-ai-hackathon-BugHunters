@@ -1,0 +1,26 @@
+{
+  "source": "PORTPULSE_ML",
+  "port_id": "INMUN",
+  "forecast": {
+    "24h": {
+      "risk_score": 0.82
+    },
+    "48h": {
+      "risk_score": 0.76
+    },
+    "72h": {
+      "risk_score": 0.55
+    }
+  },
+  "risk_trajectory": "DECREASING",
+  "pressure_state": "BUILDING",
+  "risk_drivers": [
+    "port_calls_rolling_mean_3",
+    "port_calls_lag_1"
+  ],
+  "confidence": 0.92,
+  "data_quality": {
+    "is_reliable": true
+  },
+  "forecast_timestamp": "2026-09-15T10:00:00Z"
+}

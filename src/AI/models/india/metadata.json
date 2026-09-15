@@ -1,0 +1,205 @@
+{
+  "model_version": "3.0-INDIAN-PORTS",
+  "target_definition": "Future Port Activity Anomaly",
+  "metrics": {
+    "24h": {
+      "roc_auc": 0.916,
+      "pr_auc": 0.799,
+      "balanced_accuracy": 0.826,
+      "accuracy": 0.839,
+      "test_positive_rate": 0.278,
+      "threshold": 0.30000000000000004,
+      "port_level": {
+        "INCOK": {
+          "balanced_accuracy": 0.733,
+          "roc_auc": 0.868
+        },
+        "INMAA": {
+          "balanced_accuracy": 0.836,
+          "roc_auc": 0.909
+        },
+        "INMUN": {
+          "balanced_accuracy": 0.886,
+          "roc_auc": 0.955
+        },
+        "INNML": {
+          "balanced_accuracy": 0.873,
+          "roc_auc": 0.929
+        },
+        "INNSA": {
+          "balanced_accuracy": 0.712,
+          "roc_auc": 0.84
+        }
+      }
+    },
+    "48h": {
+      "roc_auc": 0.901,
+      "pr_auc": 0.777,
+      "balanced_accuracy": 0.831,
+      "accuracy": 0.807,
+      "test_positive_rate": 0.279,
+      "threshold": 0.20000000000000004,
+      "port_level": {
+        "INCOK": {
+          "balanced_accuracy": 0.772,
+          "roc_auc": 0.861
+        },
+        "INMAA": {
+          "balanced_accuracy": 0.834,
+          "roc_auc": 0.881
+        },
+        "INMUN": {
+          "balanced_accuracy": 0.866,
+          "roc_auc": 0.95
+        },
+        "INNML": {
+          "balanced_accuracy": 0.852,
+          "roc_auc": 0.924
+        },
+        "INNSA": {
+          "balanced_accuracy": 0.773,
+          "roc_auc": 0.801
+        }
+      }
+    },
+    "72h": {
+      "roc_auc": 0.88,
+      "pr_auc": 0.721,
+      "balanced_accuracy": 0.788,
+      "accuracy": 0.816,
+      "test_positive_rate": 0.279,
+      "threshold": 0.30000000000000004,
+      "port_level": {
+        "INCOK": {
+          "balanced_accuracy": 0.749,
+          "roc_auc": 0.841
+        },
+        "INMAA": {
+          "balanced_accuracy": 0.746,
+          "roc_auc": 0.841
+        },
+        "INMUN": {
+          "balanced_accuracy": 0.875,
+          "roc_auc": 0.923
+        },
+        "INNML": {
+          "balanced_accuracy": 0.853,
+          "roc_auc": 0.924
+        },
+        "INNSA": {
+          "balanced_accuracy": 0.605,
+          "roc_auc": 0.783
+        }
+      }
+    }
+  },
+  "features": [
+    "port_calls",
+    "container_calls",
+    "tanker_calls",
+    "dry_bulk_calls",
+    "wind_speed_knots",
+    "month",
+    "day_of_week",
+    "weekend",
+    "port_calls_lag_1",
+    "port_calls_lag_2",
+    "port_calls_lag_3",
+    "port_calls_lag_7",
+    "port_calls_lag_14",
+    "port_calls_lag_30",
+    "port_calls_rolling_mean_3",
+    "port_calls_rolling_max_3",
+    "port_calls_rolling_std_3",
+    "port_calls_rolling_mean_7",
+    "port_calls_rolling_max_7",
+    "port_calls_rolling_std_7",
+    "port_calls_rolling_mean_14",
+    "port_calls_rolling_max_14",
+    "port_calls_rolling_std_14",
+    "port_calls_rolling_mean_30",
+    "port_calls_rolling_max_30",
+    "port_calls_rolling_std_30",
+    "container_calls_lag_1",
+    "container_calls_lag_2",
+    "container_calls_lag_3",
+    "container_calls_lag_7",
+    "container_calls_lag_14",
+    "container_calls_lag_30",
+    "container_calls_rolling_mean_3",
+    "container_calls_rolling_max_3",
+    "container_calls_rolling_std_3",
+    "container_calls_rolling_mean_7",
+    "container_calls_rolling_max_7",
+    "container_calls_rolling_std_7",
+    "container_calls_rolling_mean_14",
+    "container_calls_rolling_max_14",
+    "container_calls_rolling_std_14",
+    "container_calls_rolling_mean_30",
+    "container_calls_rolling_max_30",
+    "container_calls_rolling_std_30",
+    "tanker_calls_lag_1",
+    "tanker_calls_lag_2",
+    "tanker_calls_lag_3",
+    "tanker_calls_lag_7",
+    "tanker_calls_lag_14",
+    "tanker_calls_lag_30",
+    "tanker_calls_rolling_mean_3",
+    "tanker_calls_rolling_max_3",
+    "tanker_calls_rolling_std_3",
+    "tanker_calls_rolling_mean_7",
+    "tanker_calls_rolling_max_7",
+    "tanker_calls_rolling_std_7",
+    "tanker_calls_rolling_mean_14",
+    "tanker_calls_rolling_max_14",
+    "tanker_calls_rolling_std_14",
+    "tanker_calls_rolling_mean_30",
+    "tanker_calls_rolling_max_30",
+    "tanker_calls_rolling_std_30",
+    "dry_bulk_calls_lag_1",
+    "dry_bulk_calls_lag_2",
+    "dry_bulk_calls_lag_3",
+    "dry_bulk_calls_lag_7",
+    "dry_bulk_calls_lag_14",
+    "dry_bulk_calls_lag_30",
+    "dry_bulk_calls_rolling_mean_3",
+    "dry_bulk_calls_rolling_max_3",
+    "dry_bulk_calls_rolling_std_3",
+    "dry_bulk_calls_rolling_mean_7",
+    "dry_bulk_calls_rolling_max_7",
+    "dry_bulk_calls_rolling_std_7",
+    "dry_bulk_calls_rolling_mean_14",
+    "dry_bulk_calls_rolling_max_14",
+    "dry_bulk_calls_rolling_std_14",
+    "dry_bulk_calls_rolling_mean_30",
+    "dry_bulk_calls_rolling_max_30",
+    "dry_bulk_calls_rolling_std_30",
+    "wind_speed_knots_lag_1",
+    "wind_speed_knots_lag_2",
+    "wind_speed_knots_lag_3",
+    "wind_speed_knots_lag_7",
+    "wind_speed_knots_lag_14",
+    "wind_speed_knots_lag_30",
+    "wind_speed_knots_rolling_mean_3",
+    "wind_speed_knots_rolling_max_3",
+    "wind_speed_knots_rolling_std_3",
+    "wind_speed_knots_rolling_mean_7",
+    "wind_speed_knots_rolling_max_7",
+    "wind_speed_knots_rolling_std_7",
+    "wind_speed_knots_rolling_mean_14",
+    "wind_speed_knots_rolling_max_14",
+    "wind_speed_knots_rolling_std_14",
+    "wind_speed_knots_rolling_mean_30",
+    "wind_speed_knots_rolling_max_30",
+    "wind_speed_knots_rolling_std_30",
+    "port_calls_change_1d",
+    "port_calls_change_7d",
+    "container_ratio",
+    "tanker_ratio",
+    "port_id_INCOK",
+    "port_id_INMAA",
+    "port_id_INMUN",
+    "port_id_INNML",
+    "port_id_INNSA"
+  ]
+}

@@ -1,0 +1,16 @@
+feature,importance
+month,0.052144386
+tanker_calls_rolling_max_30,0.040787727
+port_calls_lag_7,0.037683185
+container_calls_rolling_max_30,0.033108782
+day_of_week,0.031526223
+port_calls_rolling_mean_7,0.026001967
+port_calls_rolling_max_7,0.023927467
+container_calls_rolling_mean_7,0.023425221
+tanker_calls_rolling_max_14,0.022820648
+port_calls_rolling_max_14,0.022557754
+port_calls_lag_30,0.020461416
+container_calls_rolling_mean_30,0.020207092
+wind_speed_knots_rolling_max_30,0.02000744
+port_calls_rolling_max_3,0.018096052
+port_calls_lag_14,0.016987761
