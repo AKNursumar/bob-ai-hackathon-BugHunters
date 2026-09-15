@@ -1,5 +1,5 @@
 """
-PortPulse Backend — Main FastAPI Application
+Harborline Backend — Main FastAPI Application
 """
 
 from contextlib import asynccontextmanager
@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.logging_config import setup_logging, get_logger
 from app.database.connection import init_db
+from app.services.ais_service import start_ais_listener
 from app.api import health, ports, congestion, optimization, planning, dashboard, mcp as mcp_routes
 
 logger = get_logger("app")
@@ -22,13 +23,23 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown."""
     setup_logging(logging.DEBUG if settings.api_debug else logging.INFO)
-    logger.info("PortPulse Backend starting...")
+    logger.info("Harborline Backend starting...")
     init_db()
     logger.info("Database initialized")
 
+    # Start live AIS tracking in background (only if API key is configured)
+    if settings.aisstream_api_key:
+        start_ais_listener()
+        logger.info("AISStream listener started")
+    else:
+        logger.warning(
+            "AISSTREAM_API_KEY is not set — live vessel tracking disabled. "
+            "Set AISSTREAM_API_KEY env var to enable real-time AIS data."
+        )
+
     yield
 
-    logger.info("PortPulse Backend shutting down...")
+    logger.info("Harborline Backend shutting down...")
 
 
 # ============================================================================
@@ -36,26 +47,23 @@ async def lifespan(app: FastAPI):
 # ============================================================================
 
 app = FastAPI(
-    title="PortPulse Backend API",
+    title="Harborline — Port Operations Intelligence API",
     description=(
-        "Port operations optimization and congestion prediction system. "
-        "Integrates ML-based port congestion forecasts with berth/crane "
-        "allocation optimization using OR-Tools."
+        "Harborline is an AI-powered port operations intelligence platform for Indian ports. "
+        "Combines live AIS vessel tracking, ML-based congestion forecasting (XGBoost), "
+        "and constraint-solver berth/crane optimisation (OR-Tools CP-SAT). "
+        "Covers JNPA/Nhava Sheva, Mundra, Chennai, Kandla, and Visakhapatnam."
     ),
     version="1.0.0",
     lifespan=lifespan,
 )
 
-# CORS — use a specific allowlist in production; default to localhost + vite dev
-_cors_origins: List[str] = [
-    "http://localhost:5173",  # Vite dev server
-    "http://localhost:3000",
-    "http://localhost:8001",
-]
-
+# CORS — configured via CORS_ORIGINS environment variable.
+# Development default: localhost Vite dev server.
+# Production: set CORS_ORIGINS=https://your-app.vercel.app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,10 +90,11 @@ app.include_router(mcp_routes.router, prefix="/api/v1", tags=["MCP"])
 def root():
     """Root endpoint."""
     return {
-        "name": "PortPulse Backend API",
+        "name": "Harborline Backend API",
         "version": "1.0.0",
         "docs": "/docs",
         "redoc": "/redoc",
+        "health": "/api/v1/health",
     }
 
 
@@ -94,6 +103,6 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host=settings.api_host,
-        port=settings.api_port,
+        port=settings.effective_port,
         reload=settings.api_debug,
     )

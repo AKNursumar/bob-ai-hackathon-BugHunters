@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Play, Download, CheckCircle2, Clock, Anchor, Ship } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { usePort } from '@/contexts/PortContext';
+import { apiUrl } from '@/lib/apiUrl';
 
-interface PlannedAssignment {
+export interface PlannedAssignment {
   vesselId: string;
   vesselName: string;
   vesselType: string;
@@ -113,6 +115,7 @@ function PlanTimeline({ assignments }: { assignments: PlannedAssignment[] }) {
 }
 
 export function PlannerPage() {
+  const { selectedPort } = usePort();
   const [isGenerating, setIsGenerating] = useState(false);
   const [assignments, setAssignments] = useState<PlannedAssignment[]>(INITIAL_ASSIGNMENTS);
   const [planGeneratedAt, setPlanGeneratedAt] = useState<string>(new Date().toLocaleTimeString());
@@ -122,10 +125,10 @@ export function PlannerPage() {
     setIsGenerating(true);
     setStatusMessage(null);
     try {
-      const res = await fetch('/api/v1/plans/72-hours/generate', {
+      const res = await fetch(apiUrl('/api/v1/plans/72-hours/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ port_id: 'lalb', planning_horizon_hours: 72, include_ml_forecast: true }),
+        body: JSON.stringify({ port_id: selectedPort.id, planning_horizon_hours: 72, include_ml_forecast: true }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -142,6 +145,8 @@ export function PlannerPage() {
             waitingHours: Number(a.expected_waiting_time_hours ?? 0),
             priority: Number(a.priority ?? 0),
           })));
+        } else {
+          setAssignments(INITIAL_ASSIGNMENTS);
         }
         setPlanGeneratedAt(new Date().toLocaleTimeString());
         setStatusMessage('72-Hour plan generated and committed.');
@@ -200,6 +205,9 @@ export function PlannerPage() {
           <span className="text-[12px] text-[#166534]">{statusMessage}</span>
         </div>
       )}
+
+
+
 
       {/* KPI row */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">

@@ -28,10 +28,11 @@ def list_ports(db: Session = Depends(get_db)):
         # Initialize ports if not already in database
         logger.info("Initializing ports in database...")
         port_info = {
-            "lalb": ("Los Angeles-Long Beach", "USLAX"),
-            "port235": ("Chennai", "INMAA1"),
-            "port777": ("Mundra", "INMUN1"),
-            "port776": ("JNPT / Mumbai", "INMUN2"),
+            "port776": ("JNPA / Nhava Sheva", "INNSA"),
+            "port777": ("Mundra", "INMUN"),
+            "port235": ("Chennai", "INMAA"),
+            "port540": ("Kandla", "INIXY"),
+            "port1367": ("Visakhapatnam", "INVTZ"),
         }
         
         for port_id in settings.port_list:

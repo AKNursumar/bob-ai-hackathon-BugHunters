@@ -58,10 +58,10 @@ def _find_csv(filename: str) -> Path:
 
 def _find_ais_csv() -> Optional[Path]:
     candidates = [
-        Path.cwd() / "src" / "AI" / "data" / "daily_lalb_ais.csv",
-        Path.cwd() / ".." / "AI" / "data" / "daily_lalb_ais.csv",
-        Path(__file__).resolve().parents[3] / "AI" / "data" / "daily_lalb_ais.csv",
-        Path(__file__).resolve().parents[4] / "src" / "AI" / "data" / "daily_lalb_ais.csv",
+        Path.cwd() / "src" / "AI" / "data" / "indian_ports_activity.csv",
+        Path.cwd() / ".." / "AI" / "data" / "indian_ports_activity.csv",
+        Path(__file__).resolve().parents[3] / "AI" / "data" / "indian_ports_activity.csv",
+        Path(__file__).resolve().parents[4] / "src" / "AI" / "data" / "indian_ports_activity.csv",
     ]
     for p in candidates:
         if p.exists():
@@ -98,12 +98,12 @@ def _load_operations_uncached() -> pd.DataFrame:
     except Exception:
         pass
 
-    # Ingest from Person 1's daily_lalb_ais.csv
+    # Ingest from Person 1's indian_ports_activity.csv
     ais_path = _find_ais_csv()
     if ais_path:
         df = pd.read_csv(ais_path, parse_dates=["date"])
-        df["port_id"] = "LALB"
-        df["port_name"] = "Los Angeles-Long Beach"
+        df["port_id"] = "port776"
+        df["port_name"] = "JNPA / Nhava Sheva"
         df["vessel_arrivals"] = df["unique_vessels"].fillna(45).astype(int)
         df["waiting_time_hours"] = (df["unique_vessels_anchor"] * 2.4).round(1)
         df["berth_hours"] = (df["berth_pings"] / 500.0).round(1)
@@ -117,8 +117,8 @@ def _load_operations_uncached() -> pd.DataFrame:
     dates = pd.date_range(end=datetime.now(timezone.utc), periods=30, freq="D")
     return pd.DataFrame({
         "date": dates,
-        "port_id": ["LALB"] * 30,
-        "port_name": ["Los Angeles-Long Beach"] * 30,
+        "port_id": ["port776"] * 30,
+        "port_name": ["JNPA / Nhava Sheva"] * 30,
         "waiting_time_hours": [18.5] * 30,
         "vessel_arrivals": [35] * 30,
         "berth_hours": [140.0] * 30,
@@ -143,7 +143,7 @@ def _number(row: pd.Series, column: str, default: float = 0.0) -> float:
     return default if pd.isna(value) else float(value)
 
 
-def latest_snapshot(port_id: str = "LALB") -> Dict[str, Any]:
+def latest_snapshot(port_id: str = "port776") -> Dict[str, Any]:
     frame = load_operations()
     matches = frame[frame["port_id"].astype(str).str.upper() == port_id.upper()]
     if matches.empty:
@@ -173,7 +173,7 @@ def latest_snapshot(port_id: str = "LALB") -> Dict[str, Any]:
     }
 
 
-def congestion_probability(port_id: str = "LALB") -> float:
+def congestion_probability(port_id: str = "port776") -> float:
     snapshot = latest_snapshot(port_id)
     features = load_features()
     if features is not None and "target_1m_congestion" in features.columns:
@@ -184,7 +184,7 @@ def congestion_probability(port_id: str = "LALB") -> float:
     return round(max(0.0, min(1.0, snapshot["congestion_index"] / 100)), 4)
 
 
-def trend(port_id: str = "LALB", limit: int = 13) -> List[Dict[str, Any]]:
+def trend(port_id: str = "port776", limit: int = 13) -> List[Dict[str, Any]]:
     frame = load_operations()
     matches = frame[frame["port_id"].astype(str).str.upper() == port_id.upper()].tail(limit)
     historical_wait = float(frame["waiting_time_hours"].mean())

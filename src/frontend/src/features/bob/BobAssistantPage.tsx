@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bot, Send, Cpu, ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { apiUrl } from '@/lib/apiUrl';
 
 interface MCPTool {
   name: string;
@@ -23,17 +24,17 @@ const FALLBACK_TOOLS: MCPTool[] = [
 
 function resolveToolCall(text: string): { tool: string; args: Record<string, unknown> } | null {
   const lower = text.toLowerCase();
-  if (lower.includes('watch') || lower.includes('handover') || lower.includes('notes')) return { tool: 'explain_congestion', args: { port_id: 'lalb', horizon: '24h' } };
-  if (lower.includes('vessel schedule') || lower.includes('arrival')) return { tool: 'get_vessel_schedule', args: { port_id: 'lalb', horizon_hours: 72 } };
-  if (lower.includes('status') || lower.includes('port')) return { tool: 'get_port_status', args: { port_id: 'lalb' } };
-  if (lower.includes('berth')) return { tool: 'get_berth_status', args: { port_id: 'lalb' } };
-  if (lower.includes('crane')) return { tool: 'get_crane_status', args: { port_id: 'lalb' } };
-  if (lower.includes('forecast') || lower.includes('predict') || lower.includes('congestion')) return { tool: 'get_congestion_forecast', args: { port_id: 'lalb', horizon: '24h' } };
-  if (lower.includes('hotspot') || lower.includes('bottleneck')) return { tool: 'get_congestion_hotspots', args: { port_id: 'lalb', horizon_hours: 24 } };
-  if (lower.includes('optimis') || lower.includes('optimize') || lower.includes('solver')) return { tool: 'optimise_schedule', args: { port_id: 'lalb', horizon_hours: 72 } };
-  if (lower.includes('plan') || lower.includes('72')) return { tool: 'generate_72_hour_plan', args: { port_id: 'lalb' } };
-  if (lower.includes('what-if') || lower.includes('scenario') || lower.includes('simulate')) return { tool: 'run_what_if', args: { port_id: 'lalb', scenario_type: 'VESSEL_DELAY', parameters: { vessel_id: 'VS-001', delay_hours: 4 } } };
-  if (lower.startsWith('execute ')) return { tool: text.slice('Execute '.length).trim(), args: { port_id: 'lalb' } };
+  if (lower.includes('watch') || lower.includes('handover') || lower.includes('notes')) return { tool: 'explain_congestion', args: { port_id: 'port776', horizon: '24h' } };
+  if (lower.includes('vessel schedule') || lower.includes('arrival')) return { tool: 'get_vessel_schedule', args: { port_id: 'port776', horizon_hours: 72 } };
+  if (lower.includes('status') || lower.includes('port')) return { tool: 'get_port_status', args: { port_id: 'port776' } };
+  if (lower.includes('berth')) return { tool: 'get_berth_status', args: { port_id: 'port776' } };
+  if (lower.includes('crane')) return { tool: 'get_crane_status', args: { port_id: 'port776' } };
+  if (lower.includes('forecast') || lower.includes('predict') || lower.includes('congestion')) return { tool: 'get_congestion_forecast', args: { port_id: 'port776', horizon: '24h' } };
+  if (lower.includes('hotspot') || lower.includes('bottleneck')) return { tool: 'get_congestion_hotspots', args: { port_id: 'port776', horizon_hours: 24 } };
+  if (lower.includes('optimis') || lower.includes('optimize') || lower.includes('solver')) return { tool: 'optimise_schedule', args: { port_id: 'port776', horizon_hours: 72 } };
+  if (lower.includes('plan') || lower.includes('72')) return { tool: 'generate_72_hour_plan', args: { port_id: 'port776' } };
+  if (lower.includes('what-if') || lower.includes('scenario') || lower.includes('simulate')) return { tool: 'run_what_if', args: { port_id: 'port776', scenario_type: 'VESSEL_DELAY', parameters: { vessel_id: 'VS-001', delay_hours: 4 } } };
+  if (lower.startsWith('execute ')) return { tool: text.slice('Execute '.length).trim(), args: { port_id: 'port776' } };
   return null;
 }
 
@@ -43,7 +44,7 @@ function formatToolResponse(toolName: string, result: Record<string, unknown>): 
   switch (toolName) {
     case 'get_port_status': {
       const d = (data.data ?? data) as Record<string, unknown>;
-      return `Port Status — ${d.port_name ?? 'Los Angeles-Long Beach'}\n\nActive Berths: ${d.total_berths ?? 5}\nAvailable Cranes: ${d.available_cranes ?? 10}\nWaiting Vessels: ${d.waiting_vessels ?? d.vessels_at_anchor ?? '—'}\nCongestion Level: ${d.congestion_level ?? '—'}`;
+      return `Port Status — ${d.port_name ?? 'JNPA / Nhava Sheva'}\n\nActive Berths: ${d.total_berths ?? 5}\nAvailable Cranes: ${d.available_cranes ?? 10}\nWaiting Vessels: ${d.waiting_vessels ?? d.vessels_at_anchor ?? '—'}\nCongestion Level: ${d.congestion_level ?? '—'}`;
     }
     case 'get_congestion_forecast':
       return `Congestion Forecast — ${data.horizon_hours}h\n\nRisk Level: ${data.congestion_level}\nProbability: ${((data.congestion_probability as number) * 100).toFixed(0)}%\nConfidence: ${((data.confidence as number) * 100).toFixed(0)}%`;
@@ -103,7 +104,7 @@ export function BobAssistantPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/v1/mcp/tools')
+    fetch(apiUrl('/api/v1/mcp/tools'))
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data && Array.isArray(data.tools) && data.tools.length > 0) {
@@ -134,7 +135,7 @@ export function BobAssistantPage() {
     try {
       const resolved = resolveToolCall(textToSend);
       if (resolved) {
-        const res = await fetch(`/api/v1/mcp/tools/${resolved.tool}`, {
+        const res = await fetch(apiUrl(`/api/v1/mcp/tools/${resolved.tool}`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ arguments: resolved.args }),

@@ -13,7 +13,7 @@ def run_pipeline():
     print("PORTPULSE INTERNATIONAL ML PIPELINE (OPTIMIZED)")
     print("==================================================")
     
-    in_file = Path("src/AI/data/daily_lalb_ais.csv")
+    in_file = Path("src/AI/data/indian_ports_activity.csv")
     df = pd.read_csv(in_file)
     df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values('date').reset_index(drop=True)

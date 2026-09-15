@@ -88,7 +88,7 @@ class GetPortStatusTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     }
                 },
                 "required": ["port_id"],
@@ -121,7 +121,7 @@ class GetVesselScheduleTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     },
                     "horizon_hours": {
                         "type": "integer",
@@ -187,7 +187,7 @@ class GetCongestionForecastTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     },
                     "horizon": {
                         "type": "string",
@@ -274,7 +274,7 @@ class GetCongestionHotspotsTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     },
                     "horizon_hours": {
                         "type": "integer",
@@ -347,7 +347,7 @@ class GetBerthStatusTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     }
                 },
                 "required": ["port_id"],
@@ -406,7 +406,7 @@ class GetCraneStatusTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     }
                 },
                 "required": ["port_id"],
@@ -469,7 +469,7 @@ class OptimiseScheduleTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     },
                     "horizon_hours": {
                         "type": "integer",
@@ -592,7 +592,7 @@ class RunWhatIfTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     },
                     "scenario_type": {
                         "type": "string",
@@ -752,7 +752,7 @@ class Generate72HourPlanTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     }
                 },
                 "required": ["port_id"],
@@ -880,7 +880,7 @@ class ExplainCongestionTool(MCPTool):
                 "properties": {
                     "port_id": {
                         "type": "string",
-                        "description": "Port identifier: lalb, port235, port776, or port777",
+                        "description": "Port identifier: port776, port777, port235, port540, port1367",
                     },
                     "horizon": {
                         "type": "string",

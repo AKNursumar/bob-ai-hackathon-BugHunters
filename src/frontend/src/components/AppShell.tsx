@@ -5,13 +5,13 @@ import { TopBar } from './TopBar';
 import { cn } from '@/lib/utils';
 
 interface AppShellProps {
-  portName?: string;
+
   systemStatus?: 'live' | 'delayed' | 'offline';
   lastUpdated?: string;
 }
 
 export function AppShell({
-  portName = 'Los Angeles / Long Beach',
+
   systemStatus = 'live',
   lastUpdated = new Date().toISOString(),
 }: AppShellProps) {
@@ -31,7 +31,6 @@ export function AppShell({
 
       <div className={cn('flex flex-col flex-1 min-w-0 transition-all duration-200', sidebarWidth)}>
         <TopBar
-          portName={portName}
           systemStatus={systemStatus}
           lastUpdated={lastUpdated}
           onMobileMenuOpen={() => setIsMobileOpen(true)}

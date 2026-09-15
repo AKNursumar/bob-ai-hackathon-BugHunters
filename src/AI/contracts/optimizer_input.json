@@ -1,20 +1,26 @@
 {
-  "port_id": "LALB",
+  "source": "PORTPULSE_ML",
+  "port_id": "INMUN",
   "forecast": {
-    "24h": 0.83,
-    "48h": 0.85,
-    "72h": 0.84
-  },
-  "pressure_state": "SURGING",
-  "risk_drivers": [
-    {
-      "feature": "waiting_vessels_change_1d",
-      "direction": "up"
+    "24h": {
+      "risk_score": 0.394,
+      "risk_level": "LOW"
     },
-    {
-      "feature": "unique_vessels_anchor_rolling_mean_14",
-      "direction": "up"
+    "48h": {
+      "risk_score": 0.394,
+      "risk_level": "LOW"
+    },
+    "72h": {
+      "risk_score": 0.394,
+      "risk_level": "LOW"
     }
+  },
+  "risk_trajectory": "DECREASING",
+  "pressure_state": "STABLE",
+  "risk_drivers": [
+    "portcalls_rolling_mean_3",
+    "portcalls_lag_1"
   ],
-  "model_version": "2.0-HIGH-ACCURACY"
+  "confidence": 0.92,
+  "forecast_timestamp": "2026-09-15T10:00:00Z"
 }

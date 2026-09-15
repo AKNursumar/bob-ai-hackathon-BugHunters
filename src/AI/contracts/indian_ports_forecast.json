@@ -1,0 +1,172 @@
+{
+  "port1367": {
+    "forecast": {
+      "24h": {
+        "risk_score": 0.363,
+        "risk_level": "LOW"
+      },
+      "48h": {
+        "risk_score": 0.363,
+        "risk_level": "LOW"
+      },
+      "72h": {
+        "risk_score": 0.363,
+        "risk_level": "LOW"
+      }
+    },
+    "pressure_state": "STABLE",
+    "risk_drivers": [
+      {
+        "feature": "portcalls_rolling_mean_3",
+        "direction": "up"
+      },
+      {
+        "feature": "portcalls_lag_1",
+        "direction": "up"
+      }
+    ],
+    "data_quality": {
+      "coverage": 1.0,
+      "source": "IMF_PortWatch"
+    },
+    "model": {
+      "version": "4.0-REAL-INDIAN-PORTS"
+    }
+  },
+  "port235": {
+    "forecast": {
+      "24h": {
+        "risk_score": 0.327,
+        "risk_level": "LOW"
+      },
+      "48h": {
+        "risk_score": 0.327,
+        "risk_level": "LOW"
+      },
+      "72h": {
+        "risk_score": 0.327,
+        "risk_level": "LOW"
+      }
+    },
+    "pressure_state": "STABLE",
+    "risk_drivers": [
+      {
+        "feature": "portcalls_rolling_mean_3",
+        "direction": "up"
+      },
+      {
+        "feature": "portcalls_lag_1",
+        "direction": "up"
+      }
+    ],
+    "data_quality": {
+      "coverage": 1.0,
+      "source": "IMF_PortWatch"
+    },
+    "model": {
+      "version": "4.0-REAL-INDIAN-PORTS"
+    }
+  },
+  "port540": {
+    "forecast": {
+      "24h": {
+        "risk_score": 0.373,
+        "risk_level": "LOW"
+      },
+      "48h": {
+        "risk_score": 0.373,
+        "risk_level": "LOW"
+      },
+      "72h": {
+        "risk_score": 0.373,
+        "risk_level": "LOW"
+      }
+    },
+    "pressure_state": "STABLE",
+    "risk_drivers": [
+      {
+        "feature": "portcalls_rolling_mean_3",
+        "direction": "up"
+      },
+      {
+        "feature": "portcalls_lag_1",
+        "direction": "up"
+      }
+    ],
+    "data_quality": {
+      "coverage": 1.0,
+      "source": "IMF_PortWatch"
+    },
+    "model": {
+      "version": "4.0-REAL-INDIAN-PORTS"
+    }
+  },
+  "port776": {
+    "forecast": {
+      "24h": {
+        "risk_score": 0.409,
+        "risk_level": "LOW"
+      },
+      "48h": {
+        "risk_score": 0.409,
+        "risk_level": "LOW"
+      },
+      "72h": {
+        "risk_score": 0.409,
+        "risk_level": "LOW"
+      }
+    },
+    "pressure_state": "STABLE",
+    "risk_drivers": [
+      {
+        "feature": "portcalls_rolling_mean_3",
+        "direction": "up"
+      },
+      {
+        "feature": "portcalls_lag_1",
+        "direction": "up"
+      }
+    ],
+    "data_quality": {
+      "coverage": 1.0,
+      "source": "IMF_PortWatch"
+    },
+    "model": {
+      "version": "4.0-REAL-INDIAN-PORTS"
+    }
+  },
+  "port777": {
+    "forecast": {
+      "24h": {
+        "risk_score": 0.394,
+        "risk_level": "LOW"
+      },
+      "48h": {
+        "risk_score": 0.394,
+        "risk_level": "LOW"
+      },
+      "72h": {
+        "risk_score": 0.394,
+        "risk_level": "LOW"
+      }
+    },
+    "pressure_state": "STABLE",
+    "risk_drivers": [
+      {
+        "feature": "portcalls_rolling_mean_3",
+        "direction": "up"
+      },
+      {
+        "feature": "portcalls_lag_1",
+        "direction": "up"
+      }
+    ],
+    "data_quality": {
+      "coverage": 1.0,
+      "source": "IMF_PortWatch"
+    },
+    "model": {
+      "version": "4.0-REAL-INDIAN-PORTS"
+    }
+  }
+}

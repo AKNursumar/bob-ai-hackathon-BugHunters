@@ -8,16 +8,18 @@ This guide runs the checked-in Harborline / PORTPULSE AI prototype locally. The 
 - Node.js 20 or newer with npm.
 - Git.
 
-Run all commands below from the repository root unless a command changes directory. PowerShell examples are shown for Windows.
+- [x] Python 3.11+
+- [x] Node.js 18+ and npm
+- [x] Git
+- [x] An AISStream.io account (free tier) — get API key at https://aisstream.io
 
 ## Backend setup
 
-```powershell
-cd src\backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+### Backend
+
+```bash
+cd src/backend
+cp .env.example .env
 ```
 
 Optional: copy the supplied configuration template if you need to change defaults.
@@ -81,49 +83,103 @@ All settings are optional for a local run. The backend reads variables from its 
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///./portpulse.db` | SQLAlchemy database URL. PostgreSQL can be used by supplying an appropriate URL and driver. |
-| `API_HOST` | `0.0.0.0` | Bind host for the FastAPI process. |
-| `API_PORT` | `8001` | Backend listening port. |
-| `API_DEBUG` | `false` | Enables debug-mode behavior when set to `true`. |
-| `ML_MODEL_PATH` | `../AI/models` | Candidate path for model artifacts; the service also searches repository-relative locations. |
-| `ML_DATA_PATH` | `../AI/data` | Candidate path for the model input data; repository-relative locations are also searched. |
-| `INTERNATIONAL_DATA_PATH` | unset | Optional external international-data path. It is not needed for the checked-in demo. |
-| `PORTS` | `LALB,port235,port776,port777` | Comma-separated configured port identifiers. The seeded runnable scenario is `lalb`. |
-| `PORT_LALB_NAME` | `Los Angeles-Long Beach` | Display name for the demo port. |
-| `OPTIMIZATION_TIMEOUT_SECONDS` | `30` | OR-Tools solve limit. |
-| `OPTIMIZATION_LOG_SEARCH` | `false` | Enables solver search logging. |
-| `MCP_ENABLED` | `true` | Enables the MCP configuration flag. The HTTP MCP routes are included by the application. |
-| `MCP_HOST` / `MCP_PORT` | `0.0.0.0` / `3000` | Reserved MCP host and port settings. The current implementation exposes MCP through the FastAPI server on port 8001. |
-| `BERTH_COUNT_DEFAULT` | `5` | Configurable planning assumption. |
-| `CRANE_COUNT_DEFAULT` | `10` | Configurable planning assumption. |
-| `SERVICE_TIME_DEFAULT_HOURS` | `24` | Configurable planning assumption. |
-| `VESSEL_BERTH_COMPATIBILITY_STRICT` | `false` | Controls the strict-compatibility configuration flag. |
+| `AISSTREAM_API_KEY` | AISStream.io API key for live vessel tracking | No (AIS disabled if missing) |
+| `CORS_ORIGINS` | Comma-separated list of allowed frontend origins | Yes (production) |
+| `DATABASE_URL` | SQLite (default) or PostgreSQL connection string | No (defaults to SQLite) |
+| `ML_MODEL_PATH` | Path to ML model directory relative to backend root | No (defaults to `../AI/models`) |
+| `ML_DATA_PATH` | Path to AI data directory | No (defaults to `../AI/data`) |
+| `API_PORT` | Port for the backend server | No (defaults to `8001`) |
+| `API_DEBUG` | Enable debug/reload mode | No (defaults to `false`) |
+
+### Frontend
+
+```bash
+cd src/frontend
+cp .env.example .env.local
+```
+
+| Variable | Description | Required |
+|---|---|---|
+| `VITE_API_URL` | Backend base URL for production | No (leave empty for local dev — Vite proxy handles it) |
 
 ## Optional: retrain model artifacts
 
-The repository includes serialized models under `src/AI/models/`, so retraining is not required to run the app. If the corresponding input dataset is available at `src/AI/data/daily_lalb_ais.csv`, run the pipeline from the repository root:
+```bash
+# 1. Clone the repository
+git clone https://github.com/AKNursumar/bob-ai-hackathon-BugHunters.git
+cd bob-ai-hackathon-BugHunters
 
-```powershell
-python src\AI\pipeline.py
+# 2. Install backend dependencies
+cd src/backend
+pip install -r requirements.txt
+
+# 3. Configure backend environment
+cp .env.example .env
+# Open .env and set AISSTREAM_API_KEY (optional) and CORS_ORIGINS
+
+# 4. Install frontend dependencies
+cd ../frontend
+npm install
+
+# 5. Configure frontend environment
+cp .env.example .env.local
+# Leave VITE_API_URL empty for local development
 ```
 
-This rewrites the three joblib models, `metadata.json`, and the feature-importance reports. Review the resulting model metrics and validate the data split before using any retrained artifacts for decision-making.
+> No database migration commands needed — the backend auto-initialises and seeds the SQLite database on first startup.
+
+## Running the Application
+
+```bash
+# Terminal 1 — Start the backend (from src/backend/)
+cd src/backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+
+# Terminal 2 — Start the frontend (from src/frontend/)
+cd src/frontend
+npm run dev
+```
+
+The application will be available at:
+- **Frontend:** `http://localhost:5173`
+- **Backend API:** `http://localhost:8001`
+- **API Docs (Swagger):** `http://localhost:8001/docs`
+- **Health Check:** `http://localhost:8001/api/v1/health`
+
+## Running Tests
+
+```bash
+# Backend tests (from src/backend/)
+cd src/backend
+pytest tests/ -v
+
+# TypeScript type check (from src/frontend/)
+cd src/frontend
+node_modules/.bin/tsc --noEmit
+```
+
+## Quick Demo (Optional)
+
+The application seeds all required berth, crane, and vessel data on first startup — no manual seeding needed. To verify the ML pipeline is working:
+
+```bash
+# Check health endpoint (backend must be running)
+curl http://localhost:8001/api/v1/health
+
+# Check congestion forecast for JNPA
+curl http://localhost:8001/api/v1/congestion/forecast/port776
+
+# Check all ports
+curl http://localhost:8001/api/v1/congestion/forecast/all
+```
 
 ## Troubleshooting
 
 | Symptom | Resolution |
 |---|---|
-| PowerShell blocks virtual-environment activation | Run `Set-ExecutionPolicy -Scope Process Bypass`, then rerun `.\.venv\Scripts\Activate.ps1`. This change applies only to the current shell. |
-| Frontend shows network errors or fallback content | Confirm the backend is running on port 8001, then visit `/api/v1/health`. Vite’s proxy only applies when the frontend is started with `npm run dev`. |
-| `ModuleNotFoundError` or missing Python package | Activate `.venv` and rerun `pip install -r requirements.txt` from `src/backend`. |
-| Forecast request fails after moving files | Restore the checked-in `src/AI/models/` artifacts and verify `src/AI/data/` is available. The prediction service searches several repo-relative paths, but an invalid custom `ML_*_PATH` can still cause confusion. |
-| No scheduled vessels in a plan | Restart the backend so its startup seeder can refresh the LALB 72-hour demo schedule; also ensure the request uses `port_id: "lalb"`. |
-| Port 5173 or 8001 is already in use | Stop the existing process, or select another port. If you change the backend port, update the Vite proxy in `src/frontend/vite.config.ts` to match. |
-| `npm run build` fails | Use a current Node.js LTS release, delete only the generated `node_modules` directory if necessary, run `npm install`, and retry. |
-
-## Important Prototype Limitations
-
-- The local database is seeded operational data, not a live terminal system.
-- The forecast is a port-level anchorage-pressure proxy; it is not a calibrated berth-level waiting-time forecast.
-- The UI uses intentional mock or fallback content in several screens when the API does not provide detailed data.
-- The app has no authentication, authorization, production deployment configuration, or live external-data ingestion in this repository.
+| `ModuleNotFoundError: websockets` | Run `pip install -r requirements.txt` — `websockets` was added for AIS support |
+| Backend starts but shows `AISSTREAM_API_KEY not set` | This is expected if you haven't set the key — live AIS is disabled, forecasting still works |
+| Frontend shows `Unable to load KPIs` | Ensure the backend is running on port `8001` and `VITE_API_URL` is empty in `.env.local` |
+| `CORS error` in browser console | Ensure `CORS_ORIGINS=http://localhost:5173` is set in backend `.env` |
+| `ortools` import error | OR-Tools is optional — the optimisation engine uses a greedy fallback automatically. Install with `pip install ortools` for the full CP-SAT solver |
+| ML artifacts not found at startup | Ensure you are running `uvicorn` from within `src/backend/` — the model paths are relative to that directory |

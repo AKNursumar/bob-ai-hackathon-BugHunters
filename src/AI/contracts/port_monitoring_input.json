@@ -1,38 +1,39 @@
 {
   "source": "PORTPULSE_ML",
   "port": {
-    "port_id": "LALB",
-    "name": "Los Angeles-Long Beach"
+    "port_id": "INMUN",
+    "name": "Mundra"
   },
   "forecast": {
     "24h": {
-      "risk_score": 0.83,
-      "risk_level": "HIGH"
+      "risk_score": 0.394,
+      "risk_level": "LOW"
     },
     "48h": {
-      "risk_score": 0.85,
-      "risk_level": "HIGH"
+      "risk_score": 0.394,
+      "risk_level": "LOW"
     },
     "72h": {
-      "risk_score": 0.84,
-      "risk_level": "HIGH"
+      "risk_score": 0.394,
+      "risk_level": "LOW"
     }
   },
-  "pressure_state": "SURGING",
+  "pressure_state": "STABLE",
   "risk_drivers": [
     {
-      "feature": "waiting_vessels_change_1d",
+      "feature": "portcalls_rolling_mean_3",
       "direction": "up"
     },
     {
-      "feature": "unique_vessels_anchor_rolling_mean_14",
+      "feature": "portcalls_lag_1",
       "direction": "up"
     }
   ],
   "data_quality": {
-    "coverage": 0.99
+    "coverage": 1.0,
+    "source": "IMF_PortWatch"
   },
   "model": {
-    "version": "2.0-HIGH-ACCURACY"
+    "version": "4.0-REAL-INDIAN-PORTS"
   }
 }

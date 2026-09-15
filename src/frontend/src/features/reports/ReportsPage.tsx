@@ -41,7 +41,7 @@ export function ReportsPage() {
                 <span className="text-lg font-bold text-white tracking-tight">Harborline</span>
               </div>
               <h1 className="text-xl font-bold text-white mb-1">Daily Port Operations Brief</h1>
-              <p className="text-sm text-white/60">Los Angeles / Long Beach · {dateStr} · {timeStr} PST</p>
+              <p className="text-sm text-white/60">JNPA / Nhava Sheva · {dateStr} · {timeStr} PST</p>
             </div>
             <div className="text-right">
               <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">Classification</p>
@@ -60,7 +60,7 @@ export function ReportsPage() {
             </div>
             <div className="px-4 py-4 rounded-xl" style={{ background: '#FEE2E2', border: '1px solid #FECACA' }}>
               <p className="text-sm text-[#071A2B] leading-relaxed font-medium">
-                Elevated congestion risk is present across the Los Angeles / Long Beach complex over the next 24 hours.
+                Elevated congestion risk is present across the JNPA / Nhava Sheva complex over the next 24 hours.
                 Congestion probability is estimated at <strong>72%</strong> — classified as HIGH.
                 Vessel arrivals are running <strong>+18% above forecast</strong>.
                 Anchorage queue stands at <strong>12 vessels</strong>, up from a 30-day baseline of 8.6.

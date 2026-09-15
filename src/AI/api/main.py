@@ -26,43 +26,43 @@ def get_health():
 
 @app.get("/api/international/ports")
 def get_ports():
-    return [{"port_id": "LALB", "name": "Los Angeles - Long Beach", "country": "USA"}]
+    return [{"port_id": "port776", "name": "JNPA / Nhava Sheva", "country": "USA"}]
 
 @app.get("/api/international/ports/{port_id}")
 def get_port_overview(port_id: str):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     return load_json("frontend_data_contract.json")
 
 @app.get("/api/international/ports/{port_id}/state")
 def get_port_state(port_id: str):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     op = load_json("operational_data_contract.json")
     return op.get("state", {})
 
 @app.get("/api/international/ports/{port_id}/vessels")
 def get_vessels(port_id: str):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     return load_csv("vessels.csv")
 
 @app.get("/api/international/ports/{port_id}/berths")
 def get_berths(port_id: str):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     return load_csv("berths.csv")
 
 @app.get("/api/international/ports/{port_id}/history")
 def get_history(port_id: str):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     return load_csv("historical_congestion.csv")
 
 @app.get("/api/international/ports/{port_id}/forecast")
 def get_forecast(port_id: str):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     op = load_json("optimizer_input_contract.json")
     return op.get("forecast", {})
 
 @app.get("/api/international/ports/{port_id}/congestion")
 def get_congestion(port_id: str):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     op = load_json("frontend_data_contract.json")
     forecast = op.get("forecast", {})
     # Determine pressure trajectory
@@ -84,7 +84,7 @@ def get_congestion(port_id: str):
 
 @app.get("/api/international/ports/{port_id}/replay")
 def get_replay(port_id: str, timestamp: str = None):
-    if port_id != "LALB": raise HTTPException(404, "Port not found")
+    if port_id != "port776": raise HTTPException(404, "Port not found")
     # For now, return the compiled contract as the replay snapshot
     return load_json("optimizer_input_contract.json")
 
@@ -106,7 +106,7 @@ def post_what_if(req: WhatIfRequest):
 def get_data_quality():
     return {
         "dataset": "Zenodo Record 21936231 (AIS)",
-        "coverage": "Los Angeles - Long Beach",
+        "coverage": "JNPA / Nhava Sheva",
         "date_range": "2021-2024",
         "row_count": 1460, # Daily aggregate rows
         "field_classification": {

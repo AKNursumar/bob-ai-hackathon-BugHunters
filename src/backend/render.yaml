@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: harborline-backend
+    runtime: python
+    region: singapore  # Closest to Indian ports
+    rootDir: src/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      # ── Required ────────────────────────────────────────────────────────────
+      - key: AISSTREAM_API_KEY
+        sync: false  # Set in Render dashboard — never commit this
+
+      - key: CORS_ORIGINS
+        sync: false  # Set to your Vercel frontend URL, e.g. https://harborline.vercel.app
+
+      # ── Database ────────────────────────────────────────────────────────────
+      # Option A: SQLite (ephemeral, safe for hackathon — re-seeds on restart)
+      - key: DATABASE_URL
+        value: sqlite:///./harborline.db
+
+      # Option B: Uncomment and set for PostgreSQL persistent storage
+      # - key: DATABASE_URL
+      #   fromDatabase:
+      #     name: harborline-db
+      #     property: connectionString
+
+      # ── ML paths (relative to src/backend, which is rootDir) ────────────────
+      - key: ML_MODEL_PATH
+        value: ../AI/models
+
+      - key: ML_DATA_PATH
+        value: ../AI/data
+
+      # ── Application ─────────────────────────────────────────────────────────
+      - key: API_DEBUG
+        value: "false"
+
+      - key: PORTS
+        value: port776,port777,port235,port540,port1367

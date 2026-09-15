@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Sliders, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
+import { usePort } from '@/contexts/PortContext';
+import { apiUrl } from '@/lib/apiUrl';
 
 interface SimImpact {
   waitingHours: string;
@@ -80,7 +82,8 @@ function ComparisonTimeline({ impact, delayHours: _delayHours }: { impact: SimIm
 }
 
 export function SimulationPage() {
-  const [delayHours, setDelayHours] = useState(6);
+  const { selectedPort } = usePort();
+  const [delayHours, setDelayHours] = useState(0);
   const [cranesDown, setCranesDown] = useState(2);
   const [volumeSurge, setVolumeSurge] = useState(20);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -96,10 +99,10 @@ export function SimulationPage() {
     setIsSimulating(true);
     try {
       const body = delayHours > 0
-        ? { port_id: 'lalb', scenario_type: 'VESSEL_DELAY', parameters: { vessel_id: 'VS-001', delay_hours: delayHours } }
-        : { port_id: 'lalb', scenario_type: 'CRANE_UNAVAILABLE', parameters: { crane_id: `CR-00${cranesDown}` } };
+        ? { port_id: selectedPort.id, scenario_type: 'VESSEL_DELAY', parameters: { vessel_id: 'VS-001', delay_hours: delayHours } }
+        : { port_id: selectedPort.id, scenario_type: 'CRANE_UNAVAILABLE', parameters: { crane_id: `CR-00${cranesDown}` } };
 
-      const res = await fetch('/api/v1/scenarios/what-if', {
+      const res = await fetch(apiUrl('/api/v1/scenarios/what-if'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -154,6 +157,9 @@ export function SimulationPage() {
           </button>
         ))}
       </div>
+
+
+
 
       {/* Main layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

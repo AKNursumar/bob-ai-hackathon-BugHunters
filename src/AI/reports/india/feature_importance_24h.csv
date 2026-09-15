@@ -1,0 +1,16 @@
+feature,importance
+portid_port776,0.041703533
+portcalls_rolling_mean_7,0.03135001
+portcalls_rolling_max_30,0.027270496
+portcalls_container_rolling_mean_7,0.025162086
+portcalls_container_rolling_mean_3,0.023485929
+portcalls_rolling_mean_14,0.02325999
+portcalls_dry_bulk_rolling_mean_30,0.021211665
+portcalls_container_rolling_mean_30,0.021022413
+portcalls_rolling_mean_30,0.020355405
+portcalls_dry_bulk_rolling_mean_14,0.019309653
+portid_port540,0.018437972
+import_cargo_rolling_mean_30,0.017753689
+portcalls_tanker_rolling_mean_14,0.01716625
+import_cargo_rolling_max_14,0.016612211
+export_cargo_rolling_max_30,0.016056648

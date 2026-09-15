@@ -2,79 +2,63 @@
 
 ## System Architecture
 
+Harborline is a three-tier web application with a real-time data ingestion layer and an embedded MCP server for IBM Bob integration.
+
 ```mermaid
-flowchart LR
-    U[Port operator] --> FE[React + Vite web app]
-    B[IBM Bob / Bob Assistant] -->|HTTP MCP tool calls| API
-    FE -->|/api proxy in development| API[FastAPI backend]
-    API --> DB[(SQLite by default)]
-    API --> PS[Prediction service]
-    API --> OE[OR-Tools CP-SAT optimizer]
-    PS --> M[24h / 48h / 72h XGBoost artifacts]
-    PS --> A[AIS-derived daily aggregate data]
-    DB --> S[Seeded vessels, berths, cranes and schedules]
-    OE --> P[Optimized assignments and plan]
-    API --> FE
-    API --> B
+graph TD
+    AIS[AISStream.io WebSocket] -->|Real-time vessel positions| AISSVC[AIS Service<br/>background thread]
+    PORTWATCH[IMF PortWatch Data] -->|Historical portcall CSVs| MLPIPE[XGBoost ML Pipeline<br/>python training scripts]
+    MLPIPE -->|.joblib models + forecast contracts| PREDSVC[Prediction Service]
+
+    subgraph Backend [FastAPI Backend — Render]
+        AISSVC --> API
+        PREDSVC --> API
+        API[REST API /api/v1/] --> DB[(SQLite / PostgreSQL)]
+        API --> OPTSVC[OR-Tools Optimiser]
+        API --> MCPSVC[MCP Server<br/>10 registered tools]
+    end
+
+    API -->|JSON REST| FE[React + Vite Frontend<br/>Vercel]
+    BOB[IBM Bob] -->|MCP over HTTP| MCPSVC
+    USER[Port Operator / Browser] -->|HTTPS| FE
 ```
 
 ## Components
 
 | Component | Technology | Responsibility |
 |---|---|---|
-| Web application | React 19, TypeScript, Vite, Tailwind | Presents dashboard, monitoring, prediction, planner, optimization, simulation, and Bob-assistant workflows. Vite proxies `/api` to FastAPI in local development. |
-| API | FastAPI, Pydantic, SQLAlchemy | Initializes state, validates requests, routes operations, and serves OpenAPI at `/docs`. |
-| Operational store | SQLite by default; PostgreSQL-compatible SQLAlchemy URL | Stores ports, vessels, schedules, berths, cranes, predictions, optimization runs, plans, and scenarios. |
-| Seed data | Python startup seeder | Supplies the runnable LALB scenario and refreshes the future 72-hour vessel schedule when needed. |
-| Forecasting | pandas, scikit-learn, XGBoost, joblib | Produces 24h/48h/72h port-level congestion-pressure probabilities from AIS-derived features. |
-| Optimization | Google OR-Tools CP-SAT | Produces vessel-to-berth assignments designed to minimize priority-weighted waiting time. |
-| MCP wrapper | FastAPI routes and MCP service classes | Lists tool schemas and dispatches the same port intelligence and planning capabilities for IBM Bob. |
+| Frontend | React 18 + Vite + TypeScript | Dashboard UI — KPIs, congestion trends, vessel monitoring, berth status, optimisation, planner, IBM Bob chat |
+| Backend API | FastAPI (Python) | Business logic, REST endpoint orchestration, session management |
+| AIS Service | Python + websockets | Streams live vessel position data from AISStream.io into an in-memory cache per port bounding box |
+| Prediction Service | XGBoost + joblib | Loads pre-trained models and contract files to serve 24h/48h/72h congestion probability forecasts |
+| Optimisation Engine | Google OR-Tools CP-SAT | Solves vessel-berth-crane assignment as a constraint satisfaction problem; greedy fallback if OR-Tools unavailable |
+| MCP Server | Custom MCP implementation in FastAPI | Exposes 10 structured tools to IBM Bob for port status, forecasts, optimisation, what-if, and 72h plan generation |
+| Database | SQLAlchemy + SQLite (dev) / PostgreSQL (prod) | Stores berth definitions, vessel schedules, crane configurations, and generated 72h plans |
+| ML Pipeline | XGBoost + scikit-learn + pandas | Offline training on IMF PortWatch Indian port data; outputs .joblib models and indian_ports_forecast.json contract |
 
 ## Data Flow
 
-### Forecast flow
-
-1. `src/AI/pipeline.py` engineers calendar, lag, rolling-window, and anchor-queue momentum features from daily LALB AIS aggregates.
-2. The pipeline writes three joblib payloads to `src/AI/models/` and feature-importance CSV reports to `src/AI/reports/`.
-3. `PredictionService` finds those artifacts, builds the latest compatible feature row, and calls `predict_proba` for each requested horizon.
-4. Probabilities are assigned to risk bands: `LOW` (below 0.40), `MODERATE` (0.40–0.59), `HIGH` (0.60–0.79), and `CRITICAL` (0.80+).
-5. `GET /api/v1/congestion/forecast/{port_id}` returns the three forecasts and stores them for downstream status and hotspot calls.
+1. **Live AIS:** On backend startup, a background daemon thread connects to AISStream.io WebSocket, subscribes to bounding boxes for all five Indian ports, and maintains an in-memory dict of live vessel positions keyed by MMSI.
+2. **Forecast serving:** When a congestion forecast is requested (`GET /api/v1/congestion/forecast/{port_id}`), the Prediction Service reads the pre-computed `indian_ports_forecast.json` contract file, returns 24h/48h/72h risk scores, and enriches with AIS-derived live vessel counts.
+3. **Dashboard:** The React frontend polls `GET /api/v1/dashboard/summary?port_id=...` on mount and on manual refresh. The backend assembles KPIs from the Prediction Service (congestion risk) and AIS Service (live vessel counts) and returns a structured response.
+4. **Optimisation:** The operator submits a POST to `/api/v1/optimization/compare`; the OR-Tools engine reads vessel ETAs and berth/crane configs from the database, runs the CP-SAT solver, and returns before/after metrics.
+5. **IBM Bob:** Bob calls MCP tool endpoints via `POST /api/v1/mcp/tools/{tool_name}`. Tools read from the same Prediction, AIS, and Port services as the REST API and return structured JSON responses that Bob presents to the operator in natural language.
 
 ### Planning and optimization flow
 
-1. During FastAPI startup, the application creates database tables and seeds `lalb` if absent.
-2. A planning or optimization request loads scheduled vessels, berths, and cranes for the requested horizon.
-3. The service calculates a baseline schedule, then calls the OR-Tools optimizer.
-4. The optimizer result is persisted as an optimization run or operations plan and returned with assignments and waiting-time metrics.
-5. The planner and optimization pages display the returned result; they also have UI-level fallback content if an API call fails.
-
-### Bob tool flow
+- All secret credentials (AISStream API key, database URL, CORS origins) are loaded exclusively from environment variables — never committed to the repository.
+- CORS is configured via the `CORS_ORIGINS` environment variable and restricted to the deployed frontend URL in production.
+- The AIS API key is never returned in any API response or logged at INFO level.
+- The `.env` file is in `.gitignore`; only `.env.example` with placeholder values is committed.
+- The health endpoint (`/api/v1/health`) does not expose internal file paths, model weights, or credentials.
 
 1. A caller discovers tool definitions through `GET /api/v1/mcp/tools`.
 2. It calls `POST /api/v1/mcp/tools/{tool_name}` with `{ "arguments": { ... } }`.
 3. The MCP service executes the relevant forecast, status, schedule, optimization, scenario, plan, or explanation operation and returns structured JSON.
 
-## API Surface
+The FastAPI backend is fully stateless except for the in-memory AIS vessel cache (which is a local dict per process). In a production deployment beyond the hackathon:
 
-The FastAPI interactive contract is the source of truth at `http://localhost:8001/docs` when running locally. The principal routes are:
-
-| Area | Endpoints |
-|---|---|
-| Service | `GET /`, `GET /api/v1/health` |
-| Ports | `GET /api/v1/ports`, `GET /api/v1/ports/{port_id}`, `GET /api/v1/ports/{port_id}/status` |
-| Congestion | `GET /api/v1/congestion/forecast/{port_id}`, `/current/{port_id}`, `/hotspots/{port_id}`, `/predictions/{port_id}` |
-| UI data | `GET /api/v1/dashboard/summary`, `GET /api/v1/monitoring` |
-| Optimization | `POST /api/v1/optimization/run`, `/compare`, or `/optimize`; `GET /api/v1/optimization/{run_id}` |
-| Planning | `POST /api/v1/plans/72-hours/generate`, `GET /api/v1/plans/{plan_id}`, `POST /api/v1/scenarios/what-if` |
-| MCP | `GET /api/v1/mcp/tools`, `POST /api/v1/mcp/tools/{tool_name}`, `GET /api/v1/mcp/resources`, `GET /api/v1/mcp/status` |
-
-## Security and Operational Notes
-
-- Local development uses SQLite and has no authentication or authorization layer. Do not expose this prototype directly to the internet.
-- CORS is restricted in code to common localhost origins. A deployment should use an explicit production allowlist, HTTPS, authentication, authorization, rate limits, and audited secrets management.
-- The default data path has no required API keys. `DATABASE_URL` may be changed to a PostgreSQL connection string for a persistent deployment.
-- Forecast artifacts and the LALB operational scenario are local prototype assets. External feeds, real berth availability, and production schedule writes are not implemented.
-
-## Scalability Path
-
-The API is organized into route and service layers, so it can be scaled independently of the browser client. A production evolution would replace seed data with validated AIS, terminal, weather, and schedule feeds; use PostgreSQL and migrations; run model training separately from inference; cache read-heavy forecasts; and put the API behind authenticated, monitored infrastructure. The optimizer should then be validated against actual port constraints before its results are used operationally.
+- **Backend scaling:** Multiple Render instances would need the AIS cache replaced with a shared Redis store. The prediction and optimisation services are already stateless.
+- **ML pipeline:** The XGBoost models are small (~300KB) and load in milliseconds. For higher-frequency updates, the training pipeline can be run on a daily schedule and push new contract files to blob storage.
+- **Database:** Switching `DATABASE_URL` to a managed PostgreSQL instance (Render, Supabase, or IBM Db2) requires zero code changes — SQLAlchemy handles the dialect difference automatically.
+- **AIS throughput:** AISStream.io supports high-volume commercial subscriptions. The current single-thread listener handles hackathon traffic; a production deployment would use asyncio with multiple reconnect workers.
