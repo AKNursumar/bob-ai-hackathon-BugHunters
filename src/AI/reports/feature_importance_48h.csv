@@ -1,0 +1,11 @@
+feature,importance
+unique_vessels_anchor_rolling_mean_14,0.264073
+unique_vessels_anchor_rolling_mean_7,0.09856369
+unique_vessels_anchor_rolling_max_14,0.06355304
+unique_vessels_anchor_rolling_max_30,0.019320799
+unique_vessels_berth_rolling_std_30,0.013351445
+anchor_pings_rolling_max_3,0.011974887
+waiting_vessels_change_7d,0.010388411
+berth_pings_rolling_std_30,0.009858029
+berth_pings_rolling_mean_30,0.009739367
+anchor_pings_rolling_max_30,0.009680471

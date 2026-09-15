@@ -1,0 +1,38 @@
+{
+  "source": "PORTPULSE_ML",
+  "port": {
+    "port_id": "LALB",
+    "name": "Los Angeles-Long Beach"
+  },
+  "forecast": {
+    "24h": {
+      "risk_score": 0.83,
+      "risk_level": "HIGH"
+    },
+    "48h": {
+      "risk_score": 0.85,
+      "risk_level": "HIGH"
+    },
+    "72h": {
+      "risk_score": 0.84,
+      "risk_level": "HIGH"
+    }
+  },
+  "pressure_state": "SURGING",
+  "risk_drivers": [
+    {
+      "feature": "waiting_vessels_change_1d",
+      "direction": "up"
+    },
+    {
+      "feature": "unique_vessels_anchor_rolling_mean_14",
+      "direction": "up"
+    }
+  ],
+  "data_quality": {
+    "coverage": 0.99
+  },
+  "model": {
+    "version": "2.0-HIGH-ACCURACY"
+  }
+}
