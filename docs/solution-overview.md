@@ -21,9 +21,6 @@ The application includes routes for a dashboard, monitoring, predictions, hotspo
 - **Simulation:** posts a scenario to the what-if endpoint.
 - **Bob assistant:** discovers the available MCP tools, resolves supported natural-language prompts to a tool call, and renders the structured response.
 
-<<<<<<< HEAD
-Some pages deliberately contain presentational sample data or client-side fallbacks. They are useful for demonstrating the product workflow but should not be interpreted as a live port-data feed.
-=======
 ```
 [AISStream.io WebSocket] ──→ [AIS Service (background thread)]
                                          │
@@ -43,40 +40,24 @@ Some pages deliberately contain presentational sample data or client-side fallba
                                      ▲
                           [IBM Bob] ─┘ (MCP over HTTP)
 ```
->>>>>>> indian-port
 
 ## Key Design Decisions
 
 | Decision | Rationale |
 |---|---|
-<<<<<<< HEAD
-| Separate prediction from optimization | A congestion signal estimates pressure; a constraint solver decides how to allocate vessels and resources. Keeping these concerns separate makes each layer easier to replace and validate. |
-| Use three horizon-specific XGBoost models | A near-term operational response and a three-day planning response have different decision windows, so the project trains and serves 24h, 48h, and 72h forecasts separately. |
-| Return drivers with risk | A `HIGH` or `CRITICAL` label alone is not operationally useful. The service returns top engineered features and human-readable driver labels. |
-| Start from local, reproducible state | SQLite, checked-in model artifacts, and idempotent seed data allow the prototype to run without external services. |
-| Expose capabilities through an MCP-shaped HTTP interface | IBM Bob can discover tool schemas and call port-status, forecast, planning, optimization, scenario, and explanation operations through the backend. |
-=======
 | XGBoost over LSTM/deep learning | IMF PortWatch provides daily-resolution data — gradient-boosted trees outperform sequence models on tabular time-series at this granularity and are far cheaper to train and serve |
 | Pre-computed contracts (`indian_ports_forecast.json`) | Decouples ML pipeline from the API runtime — the backend serves forecasts immediately without loading model weights on every request; the pipeline regenerates contracts when new data is available |
 | OR-Tools CP-SAT with greedy fallback | Provides provably optimal scheduling when available; the greedy fallback ensures the optimisation endpoint never fails even in constrained environments |
 | MCP for IBM Bob integration | Model Context Protocol lets IBM Bob call structured backend tools (get_port_status, get_congestion_forecast, optimise_schedule, generate_72_hour_plan) with typed parameters and responses — more reliable than raw LLM tool calls |
 | SQLite default with PostgreSQL path | Allows zero-config local development and Render hackathon deploy; the `DATABASE_URL` env var switches to PostgreSQL for persistent production storage |
->>>>>>> indian-port
 
 ## IBM Technology Integration
 
-<<<<<<< HEAD
-The repository implements an HTTP MCP wrapper intended for IBM Bob. It exposes discovery endpoints and ten operations tools:
-
-`get_port_status`, `get_vessel_schedule`, `get_congestion_forecast`, `get_congestion_hotspots`, `get_berth_status`, `get_crane_status`, `optimise_schedule`, `run_what_if`, `generate_72_hour_plan`, and `explain_congestion`.
-
-The React Bob Assistant page uses those endpoints directly for the demo. The repository does not contain a watsonx.ai SDK call or IBM Cloud deployment configuration; references to those services describe the intended integration context rather than a required local dependency.
+- **IBM Bob (via MCP):** IBM Bob is connected to the Harborline backend through a Model Context Protocol server embedded in the FastAPI application. Bob can invoke 10 registered tools — including `get_port_status`, `get_congestion_forecast`, `get_congestion_hotspots`, `optimise_schedule`, `run_what_if`, and `generate_72_hour_plan` — to answer operator queries, explain risk, and produce executable operating plans in natural language.
+- **watsonx.ai:** Used as the inference backbone for IBM Bob's language understanding and response generation when processing operator queries routed through the Bob Assistant interface.
 
 ## Further Reading
 
 - [Architecture](architecture.md) explains the components, data flow, API surface, and boundaries.
 - [Setup guide](setup-guide.md) provides the exact local commands and verification checks.
-=======
-- **IBM Bob (via MCP):** IBM Bob is connected to the Harborline backend through a Model Context Protocol server embedded in the FastAPI application. Bob can invoke 10 registered tools — including `get_port_status`, `get_congestion_forecast`, `get_congestion_hotspots`, `optimise_schedule`, `run_what_if`, and `generate_72_hour_plan` — to answer operator queries, explain risk, and produce executable operating plans in natural language.
-- **watsonx.ai:** Used as the inference backbone for IBM Bob's language understanding and response generation when processing operator queries routed through the Bob Assistant interface.
->>>>>>> indian-port
+
