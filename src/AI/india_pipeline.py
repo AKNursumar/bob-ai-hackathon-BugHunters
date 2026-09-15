@@ -10,56 +10,48 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def create_features(df):
-    """Create lag and rolling features without data leakage."""
-    df = df.sort_values(['port_id', 'date']).reset_index(drop=True)
+    """Create lag and rolling features strictly backwards-looking to prevent leakage."""
+    df = df.sort_values(['portid', 'date']).reset_index(drop=True)
     
-    # 1. Temporal features
-    df['month'] = df['date'].dt.month
+    # Temporal features
+    df['date'] = pd.to_datetime(df['date'])
     df['day_of_week'] = df['date'].dt.weekday
     df['weekend'] = (df['day_of_week'] >= 5).astype(int)
     
-    # 2. Lag and rolling features for numerical columns
-    cols = ['port_calls', 'container_calls', 'tanker_calls', 'dry_bulk_calls', 'wind_speed_knots']
+    # Core variables for lag/rolling
+    cols = ['portcalls', 'portcalls_container', 'portcalls_tanker', 'portcalls_dry_bulk', 'import_cargo', 'export_cargo']
     
     # Ensure no leakage: shift everything by 1 to represent data available AT prediction time
-    # e.g., if we are predicting tomorrow (date + 1), we only know up to today (date).
     for col in cols:
-        for lag in [1, 2, 3, 7, 14, 30]:
-            df[f'{col}_lag_{lag}'] = df.groupby('port_id')[col].shift(lag)
+        for lag in [1, 2, 3, 7, 14]:
+            df[f'{col}_lag_{lag}'] = df.groupby('portid')[col].shift(lag)
             
         for window in [3, 7, 14, 30]:
-            # shift(1) means the rolling window ends on yesterday, strictly using historical data
-            # actually if we are at time T, predicting T+1, T+2, T+3, we know data at T.
-            # So shift(0) on the daily level but we predict the FUTURE.
-            # wait, if df has date T, and target is T+1, then features at T can use data up to T.
-            df[f'{col}_rolling_mean_{window}'] = df.groupby('port_id')[col].transform(
+            df[f'{col}_rolling_mean_{window}'] = df.groupby('portid')[col].transform(
                 lambda x: x.rolling(window, min_periods=1).mean()
             )
-            df[f'{col}_rolling_max_{window}'] = df.groupby('port_id')[col].transform(
+            df[f'{col}_rolling_max_{window}'] = df.groupby('portid')[col].transform(
                 lambda x: x.rolling(window, min_periods=1).max()
             )
-            df[f'{col}_rolling_std_{window}'] = df.groupby('port_id')[col].transform(
-                lambda x: x.rolling(window, min_periods=1).std()
-            )
 
-    # 3. Momentum features
-    df['port_calls_change_1d'] = df['port_calls'] - df['port_calls_lag_1']
-    df['port_calls_change_7d'] = df['port_calls'] - df['port_calls_lag_7']
+    # Momentum features
+    df['portcalls_change_1d'] = df['portcalls'] - df['portcalls_lag_1']
+    df['portcalls_change_7d'] = df['portcalls'] - df['portcalls_lag_7']
     
-    # Cargo Mix
-    df['container_ratio'] = df['container_calls'] / (df['port_calls'] + 1e-5)
-    df['tanker_ratio'] = df['tanker_calls'] / (df['port_calls'] + 1e-5)
+    # Mix ratios
+    df['container_ratio'] = df['portcalls_container'] / (df['portcalls'] + 1e-5)
+    df['tanker_ratio'] = df['portcalls_tanker'] / (df['portcalls'] + 1e-5)
     
     return df
 
 def run_pipeline():
     print("==================================================")
-    print("PORTPULSE ML PIPELINE: INDIAN PORTS")
+    print("PORTPULSE ML PIPELINE: REAL INDIAN PORTS (IMF PortWatch)")
     print("==================================================")
     
     in_file = Path("data/indian_ports_activity.csv")
     if not in_file.exists():
-        print(f"Error: {in_file} not found. Run generate_indian_ports.py first.")
+        print(f"Error: {in_file} not found.")
         return
         
     df = pd.read_csv(in_file)
@@ -70,38 +62,38 @@ def run_pipeline():
     
     print("2. TARGET GENERATION (Anomalous High Pressure)...")
     # Define target: future port activity / congestion pressure anomaly
-    # To prevent leakage, threshold is defined on a port-specific basis using the chronological first 60% of data
+    # Using 75th percentile on train data (strictly pre-2022) to prevent leakage
     df_sorted = df.sort_values('date')
-    train_end_idx = int(len(df_sorted) * 0.6)
-    train_end_date = df_sorted.iloc[train_end_idx]['date']
+    train_end_date = pd.to_datetime('2021-12-31')
     
     train_df = df[df['date'] <= train_end_date]
-    port_thresholds = train_df.groupby('port_id')['port_calls'].quantile(0.75).to_dict()
+    port_thresholds = train_df.groupby('portid')['portcalls'].quantile(0.75).to_dict()
     print(f"Port-specific High Pressure Thresholds (75th percentile from Train set): {port_thresholds}")
     
-    df['high_pressure_threshold'] = df['port_id'].map(port_thresholds)
-    df['is_high_pressure'] = (df['port_calls'] >= df['high_pressure_threshold']).astype(int)
+    df['high_pressure_threshold'] = df['portid'].map(port_thresholds)
+    df['is_high_pressure'] = (df['portcalls'] >= df['high_pressure_threshold']).astype(int)
     
     # Target variables (24h, 48h, 72h ahead)
-    df['target_24h'] = df.groupby('port_id')['is_high_pressure'].shift(-1)
-    df['target_48h'] = df.groupby('port_id')['is_high_pressure'].shift(-2)
-    df['target_72h'] = df.groupby('port_id')['is_high_pressure'].shift(-3)
+    df['target_24h'] = df.groupby('portid')['is_high_pressure'].shift(-1)
+    df['target_48h'] = df.groupby('portid')['is_high_pressure'].shift(-2)
+    df['target_72h'] = df.groupby('portid')['is_high_pressure'].shift(-3)
     
     df = df.dropna().reset_index(drop=True)
     
-    # Add port identity dummies, but keep a copy for metrics
-    df['port'] = df['port_id']
-    df = pd.get_dummies(df, columns=['port_id'], drop_first=False)
+    # Add port identity dummies, keep a copy for metrics
+    df['port'] = df['portid']
+    df = pd.get_dummies(df, columns=['portid'], drop_first=False)
     
     # Define features
-    exclude_cols = ['date', 'port', 'port_name', 'is_high_pressure', 'high_pressure_threshold', 
+    exclude_cols = ['date', 'port', 'portname', 'country', 'ISO3', 'ObjectId', 
+                    'is_high_pressure', 'high_pressure_threshold', 
                     'target_24h', 'target_48h', 'target_72h']
     features = [c for c in df.columns if c not in exclude_cols]
     
     print("3. TRAINING & CHRONOLOGICAL EVALUATION...")
-    # Train: < 2022-06-01, Val: 2022-06-01 to 2023-01-01, Test: >= 2023-01-01
-    train_df = df[df['date'] < '2022-06-01']
-    val_df = df[(df['date'] >= '2022-06-01') & (df['date'] < '2023-01-01')]
+    # Train: <= 2021-12-31, Val: 2022-01-01 to 2022-12-31, Test: >= 2023-01-01
+    train_df = df[df['date'] <= '2021-12-31']
+    val_df = df[(df['date'] > '2021-12-31') & (df['date'] < '2023-01-01')]
     test_df = df[df['date'] >= '2023-01-01']
     
     print(f"Train samples: {len(train_df)}")
@@ -120,19 +112,15 @@ def run_pipeline():
         X_val, y_val = val_df[features], val_df[target_col]
         X_test, y_test = test_df[features], test_df[target_col]
         
-        # Add Port identity via one-hot encoding if needed, or rely on tree splits
-        # Since we excluded port_id, we should include it!
-        # Wait, I'll update the feature set to include port_id dummy variables or use XGBoost categorical
-        # Let's just create dummies for port_id and append to features list
-        
+        # Hyperparameters chosen for highly noisy real-world logistics data
         clf = xgb.XGBClassifier(
-            n_estimators=200, 
+            n_estimators=100, 
             learning_rate=0.05, 
-            max_depth=5, 
+            max_depth=4, 
             subsample=0.8,
             random_state=42, 
             eval_metric='auc',
-            early_stopping_rounds=20
+            early_stopping_rounds=10
         )
         
         clf.fit(
@@ -199,7 +187,7 @@ def run_pipeline():
             'model': clf,
             'features': features,
             'threshold': best_thresh,
-            'target_definition': 'Future Port Activity Anomaly (>= 85th percentile from training)',
+            'target_definition': 'Future Port Activity Anomaly (>= 75th percentile from training)',
             'port_thresholds': port_thresholds
         }
         joblib.dump(payload, f"models/india/congestion_{h}.joblib")
@@ -213,7 +201,7 @@ def run_pipeline():
     # Serialize schema and metadata
     with open("models/india/metadata.json", "w") as f:
         json.dump({
-            "model_version": "3.0-INDIAN-PORTS",
+            "model_version": "4.0-REAL-INDIAN-PORTS",
             "target_definition": "Future Port Activity Anomaly",
             "metrics": metrics_report,
             "features": features

@@ -1,205 +1,211 @@
 {
-  "model_version": "3.0-INDIAN-PORTS",
+  "model_version": "4.0-REAL-INDIAN-PORTS",
   "target_definition": "Future Port Activity Anomaly",
   "metrics": {
     "24h": {
-      "roc_auc": 0.916,
-      "pr_auc": 0.799,
-      "balanced_accuracy": 0.826,
-      "accuracy": 0.839,
-      "test_positive_rate": 0.278,
+      "roc_auc": 0.829,
+      "pr_auc": 0.814,
+      "balanced_accuracy": 0.706,
+      "accuracy": 0.699,
+      "test_positive_rate": 0.484,
       "threshold": 0.30000000000000004,
       "port_level": {
-        "INCOK": {
-          "balanced_accuracy": 0.733,
-          "roc_auc": 0.868
+        "port1367": {
+          "balanced_accuracy": 0.672,
+          "roc_auc": 0.715
         },
-        "INMAA": {
-          "balanced_accuracy": 0.836,
-          "roc_auc": 0.909
+        "port235": {
+          "balanced_accuracy": 0.505,
+          "roc_auc": 0.54
         },
-        "INMUN": {
-          "balanced_accuracy": 0.886,
-          "roc_auc": 0.955
+        "port540": {
+          "balanced_accuracy": 0.626,
+          "roc_auc": 0.674
         },
-        "INNML": {
-          "balanced_accuracy": 0.873,
-          "roc_auc": 0.929
+        "port776": {
+          "balanced_accuracy": 0.695,
+          "roc_auc": 0.886
         },
-        "INNSA": {
-          "balanced_accuracy": 0.712,
-          "roc_auc": 0.84
+        "port777": {
+          "balanced_accuracy": 0.523,
+          "roc_auc": 0.711
         }
       }
     },
     "48h": {
-      "roc_auc": 0.901,
-      "pr_auc": 0.777,
-      "balanced_accuracy": 0.831,
-      "accuracy": 0.807,
-      "test_positive_rate": 0.279,
-      "threshold": 0.20000000000000004,
+      "roc_auc": 0.837,
+      "pr_auc": 0.826,
+      "balanced_accuracy": 0.703,
+      "accuracy": 0.696,
+      "test_positive_rate": 0.483,
+      "threshold": 0.30000000000000004,
       "port_level": {
-        "INCOK": {
-          "balanced_accuracy": 0.772,
-          "roc_auc": 0.861
+        "port1367": {
+          "balanced_accuracy": 0.678,
+          "roc_auc": 0.726
         },
-        "INMAA": {
-          "balanced_accuracy": 0.834,
-          "roc_auc": 0.881
+        "port235": {
+          "balanced_accuracy": 0.5,
+          "roc_auc": 0.512
         },
-        "INMUN": {
-          "balanced_accuracy": 0.866,
-          "roc_auc": 0.95
+        "port540": {
+          "balanced_accuracy": 0.618,
+          "roc_auc": 0.683
         },
-        "INNML": {
-          "balanced_accuracy": 0.852,
-          "roc_auc": 0.924
+        "port776": {
+          "balanced_accuracy": 0.75,
+          "roc_auc": 0.899
         },
-        "INNSA": {
-          "balanced_accuracy": 0.773,
-          "roc_auc": 0.801
+        "port777": {
+          "balanced_accuracy": 0.5,
+          "roc_auc": 0.763
         }
       }
     },
     "72h": {
-      "roc_auc": 0.88,
-      "pr_auc": 0.721,
-      "balanced_accuracy": 0.788,
-      "accuracy": 0.816,
-      "test_positive_rate": 0.279,
+      "roc_auc": 0.825,
+      "pr_auc": 0.805,
+      "balanced_accuracy": 0.645,
+      "accuracy": 0.636,
+      "test_positive_rate": 0.483,
       "threshold": 0.30000000000000004,
       "port_level": {
-        "INCOK": {
-          "balanced_accuracy": 0.749,
-          "roc_auc": 0.841
+        "port1367": {
+          "balanced_accuracy": 0.671,
+          "roc_auc": 0.716
         },
-        "INMAA": {
-          "balanced_accuracy": 0.746,
-          "roc_auc": 0.841
+        "port235": {
+          "balanced_accuracy": 0.505,
+          "roc_auc": 0.535
         },
-        "INMUN": {
-          "balanced_accuracy": 0.875,
-          "roc_auc": 0.923
+        "port540": {
+          "balanced_accuracy": 0.578,
+          "roc_auc": 0.64
         },
-        "INNML": {
-          "balanced_accuracy": 0.853,
-          "roc_auc": 0.924
+        "port776": {
+          "balanced_accuracy": 0.521,
+          "roc_auc": 0.878
         },
-        "INNSA": {
-          "balanced_accuracy": 0.605,
-          "roc_auc": 0.783
+        "port777": {
+          "balanced_accuracy": 0.5,
+          "roc_auc": 0.705
         }
       }
     }
   },
   "features": [
-    "port_calls",
-    "container_calls",
-    "tanker_calls",
-    "dry_bulk_calls",
-    "wind_speed_knots",
+    "year",
     "month",
+    "day",
+    "portcalls_container",
+    "portcalls_dry_bulk",
+    "portcalls_general_cargo",
+    "portcalls_roro",
+    "portcalls_tanker",
+    "portcalls_cargo",
+    "portcalls",
+    "import_container",
+    "import_dry_bulk",
+    "import_general_cargo",
+    "import_roro",
+    "import_tanker",
+    "import_cargo",
+    "import",
+    "export_container",
+    "export_dry_bulk",
+    "export_general_cargo",
+    "export_roro",
+    "export_tanker",
+    "export_cargo",
+    "export",
     "day_of_week",
     "weekend",
-    "port_calls_lag_1",
-    "port_calls_lag_2",
-    "port_calls_lag_3",
-    "port_calls_lag_7",
-    "port_calls_lag_14",
-    "port_calls_lag_30",
-    "port_calls_rolling_mean_3",
-    "port_calls_rolling_max_3",
-    "port_calls_rolling_std_3",
-    "port_calls_rolling_mean_7",
-    "port_calls_rolling_max_7",
-    "port_calls_rolling_std_7",
-    "port_calls_rolling_mean_14",
-    "port_calls_rolling_max_14",
-    "port_calls_rolling_std_14",
-    "port_calls_rolling_mean_30",
-    "port_calls_rolling_max_30",
-    "port_calls_rolling_std_30",
-    "container_calls_lag_1",
-    "container_calls_lag_2",
-    "container_calls_lag_3",
-    "container_calls_lag_7",
-    "container_calls_lag_14",
-    "container_calls_lag_30",
-    "container_calls_rolling_mean_3",
-    "container_calls_rolling_max_3",
-    "container_calls_rolling_std_3",
-    "container_calls_rolling_mean_7",
-    "container_calls_rolling_max_7",
-    "container_calls_rolling_std_7",
-    "container_calls_rolling_mean_14",
-    "container_calls_rolling_max_14",
-    "container_calls_rolling_std_14",
-    "container_calls_rolling_mean_30",
-    "container_calls_rolling_max_30",
-    "container_calls_rolling_std_30",
-    "tanker_calls_lag_1",
-    "tanker_calls_lag_2",
-    "tanker_calls_lag_3",
-    "tanker_calls_lag_7",
-    "tanker_calls_lag_14",
-    "tanker_calls_lag_30",
-    "tanker_calls_rolling_mean_3",
-    "tanker_calls_rolling_max_3",
-    "tanker_calls_rolling_std_3",
-    "tanker_calls_rolling_mean_7",
-    "tanker_calls_rolling_max_7",
-    "tanker_calls_rolling_std_7",
-    "tanker_calls_rolling_mean_14",
-    "tanker_calls_rolling_max_14",
-    "tanker_calls_rolling_std_14",
-    "tanker_calls_rolling_mean_30",
-    "tanker_calls_rolling_max_30",
-    "tanker_calls_rolling_std_30",
-    "dry_bulk_calls_lag_1",
-    "dry_bulk_calls_lag_2",
-    "dry_bulk_calls_lag_3",
-    "dry_bulk_calls_lag_7",
-    "dry_bulk_calls_lag_14",
-    "dry_bulk_calls_lag_30",
-    "dry_bulk_calls_rolling_mean_3",
-    "dry_bulk_calls_rolling_max_3",
-    "dry_bulk_calls_rolling_std_3",
-    "dry_bulk_calls_rolling_mean_7",
-    "dry_bulk_calls_rolling_max_7",
-    "dry_bulk_calls_rolling_std_7",
-    "dry_bulk_calls_rolling_mean_14",
-    "dry_bulk_calls_rolling_max_14",
-    "dry_bulk_calls_rolling_std_14",
-    "dry_bulk_calls_rolling_mean_30",
-    "dry_bulk_calls_rolling_max_30",
-    "dry_bulk_calls_rolling_std_30",
-    "wind_speed_knots_lag_1",
-    "wind_speed_knots_lag_2",
-    "wind_speed_knots_lag_3",
-    "wind_speed_knots_lag_7",
-    "wind_speed_knots_lag_14",
-    "wind_speed_knots_lag_30",
-    "wind_speed_knots_rolling_mean_3",
-    "wind_speed_knots_rolling_max_3",
-    "wind_speed_knots_rolling_std_3",
-    "wind_speed_knots_rolling_mean_7",
-    "wind_speed_knots_rolling_max_7",
-    "wind_speed_knots_rolling_std_7",
-    "wind_speed_knots_rolling_mean_14",
-    "wind_speed_knots_rolling_max_14",
-    "wind_speed_knots_rolling_std_14",
-    "wind_speed_knots_rolling_mean_30",
-    "wind_speed_knots_rolling_max_30",
-    "wind_speed_knots_rolling_std_30",
-    "port_calls_change_1d",
-    "port_calls_change_7d",
+    "portcalls_lag_1",
+    "portcalls_lag_2",
+    "portcalls_lag_3",
+    "portcalls_lag_7",
+    "portcalls_lag_14",
+    "portcalls_rolling_mean_3",
+    "portcalls_rolling_max_3",
+    "portcalls_rolling_mean_7",
+    "portcalls_rolling_max_7",
+    "portcalls_rolling_mean_14",
+    "portcalls_rolling_max_14",
+    "portcalls_rolling_mean_30",
+    "portcalls_rolling_max_30",
+    "portcalls_container_lag_1",
+    "portcalls_container_lag_2",
+    "portcalls_container_lag_3",
+    "portcalls_container_lag_7",
+    "portcalls_container_lag_14",
+    "portcalls_container_rolling_mean_3",
+    "portcalls_container_rolling_max_3",
+    "portcalls_container_rolling_mean_7",
+    "portcalls_container_rolling_max_7",
+    "portcalls_container_rolling_mean_14",
+    "portcalls_container_rolling_max_14",
+    "portcalls_container_rolling_mean_30",
+    "portcalls_container_rolling_max_30",
+    "portcalls_tanker_lag_1",
+    "portcalls_tanker_lag_2",
+    "portcalls_tanker_lag_3",
+    "portcalls_tanker_lag_7",
+    "portcalls_tanker_lag_14",
+    "portcalls_tanker_rolling_mean_3",
+    "portcalls_tanker_rolling_max_3",
+    "portcalls_tanker_rolling_mean_7",
+    "portcalls_tanker_rolling_max_7",
+    "portcalls_tanker_rolling_mean_14",
+    "portcalls_tanker_rolling_max_14",
+    "portcalls_tanker_rolling_mean_30",
+    "portcalls_tanker_rolling_max_30",
+    "portcalls_dry_bulk_lag_1",
+    "portcalls_dry_bulk_lag_2",
+    "portcalls_dry_bulk_lag_3",
+    "portcalls_dry_bulk_lag_7",
+    "portcalls_dry_bulk_lag_14",
+    "portcalls_dry_bulk_rolling_mean_3",
+    "portcalls_dry_bulk_rolling_max_3",
+    "portcalls_dry_bulk_rolling_mean_7",
+    "portcalls_dry_bulk_rolling_max_7",
+    "portcalls_dry_bulk_rolling_mean_14",
+    "portcalls_dry_bulk_rolling_max_14",
+    "portcalls_dry_bulk_rolling_mean_30",
+    "portcalls_dry_bulk_rolling_max_30",
+    "import_cargo_lag_1",
+    "import_cargo_lag_2",
+    "import_cargo_lag_3",
+    "import_cargo_lag_7",
+    "import_cargo_lag_14",
+    "import_cargo_rolling_mean_3",
+    "import_cargo_rolling_max_3",
+    "import_cargo_rolling_mean_7",
+    "import_cargo_rolling_max_7",
+    "import_cargo_rolling_mean_14",
+    "import_cargo_rolling_max_14",
+    "import_cargo_rolling_mean_30",
+    "import_cargo_rolling_max_30",
+    "export_cargo_lag_1",
+    "export_cargo_lag_2",
+    "export_cargo_lag_3",
+    "export_cargo_lag_7",
+    "export_cargo_lag_14",
+    "export_cargo_rolling_mean_3",
+    "export_cargo_rolling_max_3",
+    "export_cargo_rolling_mean_7",
+    "export_cargo_rolling_max_7",
+    "export_cargo_rolling_mean_14",
+    "export_cargo_rolling_max_14",
+    "export_cargo_rolling_mean_30",
+    "export_cargo_rolling_max_30",
+    "portcalls_change_1d",
+    "portcalls_change_7d",
     "container_ratio",
     "tanker_ratio",
-    "port_id_INCOK",
-    "port_id_INMAA",
-    "port_id_INMUN",
-    "port_id_INNML",
-    "port_id_INNSA"
+    "portid_port1367",
+    "portid_port235",
+    "portid_port540",
+    "portid_port776",
+    "portid_port777"
   ]
 }
