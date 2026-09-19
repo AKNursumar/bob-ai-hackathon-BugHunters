@@ -42,7 +42,7 @@ Harborline is an AI-powered port operations intelligence platform that combines 
 |---|---|
 | **Languages** | Python, TypeScript, JavaScript |
 | **Frameworks** | FastAPI, React, Vite |
-| **IBM Technologies** | IBM Bob (MCP), watsonx.ai |
+| **IBM Technologies** | IBM Bob (MCP) |
 | **Database** | SQLite (dev) / PostgreSQL (production) |
 | **ML & Optimisation** | XGBoost, scikit-learn, joblib, Google OR-Tools CP-SAT |
 | **Data Sources** | AISStream.io (live AIS), IMF PortWatch (port activity) |
