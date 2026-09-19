@@ -100,6 +100,35 @@ function ComparisonTimeline({ impact, delayHours: _delayHours }: { impact: SimIm
   );
 }
 
+function getDefaultCranes(portId: string): CraneDiag[] {
+  const pid = portId || 'port776';
+  return Array.from({ length: 10 }, (_, i) => {
+    const num = i + 1;
+    const cid = `${pid}-CR-${num.toString().padStart(2, '0')}`;
+    const bid = `${pid}-B${Math.floor(i / 2) + 1}`;
+    const isCrane2 = num === 2;
+    return {
+      crane_id: cid,
+      crane_name: `Super Post-Panamax Crane ${num}`,
+      berth_id: bid,
+      status: isCrane2 ? 'ELECTRICAL_FAULT' : 'HEALTHY',
+      fault_category: isCrane2 ? 'ELECTRICAL' : 'NONE',
+      fault_code: isCrane2 ? 'ERR-E102' : null,
+      fault_description: isCrane2 
+        ? 'Hoist Drive Inverter IGBT Overheat (88.5°C) — Thermal Overcurrent Trip'
+        : 'All electrical drives, hydraulics, and PLC telemetry normal.',
+      motor_temp_c: isCrane2 ? 88.5 : Number((51.2 + (i % 3) * 1.5).toFixed(1)),
+      hydraulic_pressure_bar: isCrane2 ? 192.0 : Number((196.0 - (i % 2) * 2.0).toFixed(1)),
+      vibration_mms: isCrane2 ? 2.2 : Number((1.5 + (i % 4) * 0.2).toFixed(2)),
+      estimated_mttr_hours: isCrane2 ? 3.5 : 0.0,
+      assigned_crew: isCrane2 ? 'High-Voltage Electrical Response Team (HV-02)' : null,
+      mitigation_plan: isCrane2 
+        ? 'Isolate Berth 1 drive circuit; borrow Crane CR-04 from adjacent Berth 3 for high-priority container discharge.'
+        : 'Standard continuous operation under CP-SAT optimal schedule.'
+    };
+  });
+}
+
 export function SimulationPage() {
   const { selectedPort } = usePort();
   const [delayHours, setDelayHours] = useState(0);
@@ -108,10 +137,10 @@ export function SimulationPage() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [impact, setImpact] = useState<SimImpact>(() => localImpact(0, 1, 10));
 
-  // Crane Diagnostics State
-  const [cranes, setCranes] = useState<CraneDiag[]>([]);
+  // Crane Diagnostics State — Initialized immediately with default telemetry so grid is never blank
+  const [cranes, setCranes] = useState<CraneDiag[]>(() => getDefaultCranes(selectedPort.id));
   const [loadingCranes, setLoadingCranes] = useState(false);
-  const [selectedCrane, setSelectedCrane] = useState<CraneDiag | null>(null);
+  const [selectedCrane, setSelectedCrane] = useState<CraneDiag | null>(() => getDefaultCranes(selectedPort.id)[1]);
   const [isMitigating, setIsMitigating] = useState(false);
   const [mitigationResult, setMitigationResult] = useState<any>(null);
 
@@ -122,61 +151,118 @@ export function SimulationPage() {
       if (res.ok) {
         const data = await res.json();
         const list: CraneDiag[] = data.cranes || [];
-        setCranes(list);
-        const faultyCount = list.filter(c => c.status !== 'HEALTHY').length;
-        setCranesDown(Math.max(faultyCount, 1));
-        if (list.length > 0 && !selectedCrane) {
-          setSelectedCrane(list[1] || list[0]);
+        if (list.length > 0) {
+          setCranes(list);
+          const faultyCount = list.filter(c => c.status !== 'HEALTHY').length;
+          setCranesDown(Math.max(faultyCount, 1));
+          if (!selectedCrane) {
+            setSelectedCrane(list[1] || list[0]);
+          }
         }
       }
     } catch {
-      // Fallback initial state if network down
+      // Fallback: keep existing populated state
     } finally {
       setLoadingCranes(false);
     }
   };
 
   useEffect(() => {
+    const defaultList = getDefaultCranes(selectedPort.id);
+    setCranes(defaultList);
+    setSelectedCrane(defaultList[1] || defaultList[0]);
     fetchCraneDiagnostics();
   }, [selectedPort.id]);
 
   const handleInjectFault = async (craneId: string, faultType: 'ELECTRICAL' | 'MECHANICAL' | 'TECHNICAL') => {
+    // Optimistic local update
+    const faultConfigs = {
+      ELECTRICAL: {
+        status: 'ELECTRICAL_FAULT' as const,
+        fault_category: 'ELECTRICAL' as const,
+        fault_code: 'ERR-E102',
+        fault_description: 'Hoist Drive Inverter IGBT Overheat (88.5°C) — Thermal Overcurrent Trip',
+        motor_temp_c: 88.5,
+        hydraulic_pressure_bar: 192.0,
+        vibration_mms: 2.2,
+        estimated_mttr_hours: 3.5,
+        assigned_crew: 'High-Voltage Electrical Response Team (HV-02)',
+        mitigation_plan: 'Isolate Berth 1 drive circuit; borrow Crane CR-04 from adjacent Berth 3 for high-priority container discharge.'
+      },
+      MECHANICAL: {
+        status: 'MECHANICAL_FAULT' as const,
+        fault_category: 'MECHANICAL' as const,
+        fault_code: 'ERR-M304',
+        fault_description: 'Spreader Twistlock Hydraulic Pressure Drop (112 bar) — Failsafe Latch Jam',
+        motor_temp_c: 54.0,
+        hydraulic_pressure_bar: 112.0,
+        vibration_mms: 4.8,
+        estimated_mttr_hours: 2.5,
+        assigned_crew: 'Heavy Mechanical Rigging & Hydraulic Team (HM-01)',
+        mitigation_plan: 'Lock spreader in safe cradle; stagger incoming container vessels by +4h; shift general cargo vessel to Berth 4.'
+      },
+      TECHNICAL: {
+        status: 'TECHNICAL_FAULT' as const,
+        fault_category: 'TECHNICAL' as const,
+        fault_code: 'ERR-T201',
+        fault_description: 'Optical Gantry Anti-Collision Sensor Failure — Safety Interlock E-Stop',
+        motor_temp_c: 49.0,
+        hydraulic_pressure_bar: 195.0,
+        vibration_mms: 1.4,
+        estimated_mttr_hours: 1.5,
+        assigned_crew: 'Automation & PLC Instrumentation Specialist',
+        mitigation_plan: 'Switch gantry to supervised manual dead-man control; clear berth conflicts via OR-Tools CP-SAT.'
+      }
+    };
+
+    const cfg = faultConfigs[faultType];
+    setCranes(prev => prev.map(c => c.crane_id === craneId ? { ...c, ...cfg } : c));
+    setSelectedCrane(prev => prev && prev.crane_id === craneId ? { ...prev, ...cfg } : prev);
+    const newCount = cranes.filter(c => c.crane_id !== craneId && c.status !== 'HEALTHY').length + 1;
+    setCranesDown(newCount);
+    setImpact(localImpact(delayHours, newCount, volumeSurge));
+    setMitigationResult(null);
+
+    // Call API in background
     try {
-      const res = await fetch(apiUrl(`/api/v1/ports/${selectedPort.id}/cranes/diagnostics/inject`), {
+      await fetch(apiUrl(`/api/v1/ports/${selectedPort.id}/cranes/diagnostics/inject`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ crane_id: craneId, fault_type: faultType }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCranes(prev => prev.map(c => c.crane_id === craneId ? data.crane : c));
-        setSelectedCrane(data.crane);
-        const newCount = cranes.filter(c => c.crane_id !== craneId && c.status !== 'HEALTHY').length + 1;
-        setCranesDown(newCount);
-        setImpact(localImpact(delayHours, newCount, volumeSurge));
-        setMitigationResult(null);
-      }
     } catch (e) {
       console.error(e);
     }
   };
 
   const handleResetCrane = async (craneId: string) => {
+    // Optimistic local update
+    const resetCfg = {
+      status: 'HEALTHY' as const,
+      fault_category: 'NONE' as const,
+      fault_code: null,
+      fault_description: 'All electrical drives, hydraulics, and PLC telemetry normal.',
+      motor_temp_c: 51.5,
+      hydraulic_pressure_bar: 196.0,
+      vibration_mms: 1.5,
+      estimated_mttr_hours: 0.0,
+      assigned_crew: null,
+      mitigation_plan: 'Standard continuous operation under CP-SAT optimal schedule.'
+    };
+
+    setCranes(prev => prev.map(c => c.crane_id === craneId ? { ...c, ...resetCfg } : c));
+    setSelectedCrane(prev => prev && prev.crane_id === craneId ? { ...prev, ...resetCfg } : prev);
+    const newCount = Math.max(0, cranes.filter(c => c.crane_id !== craneId && c.status !== 'HEALTHY').length);
+    setCranesDown(newCount);
+    setImpact(localImpact(delayHours, newCount, volumeSurge));
+    setMitigationResult(null);
+
     try {
-      const res = await fetch(apiUrl(`/api/v1/ports/${selectedPort.id}/cranes/diagnostics/reset`), {
+      await fetch(apiUrl(`/api/v1/ports/${selectedPort.id}/cranes/diagnostics/reset`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ crane_id: craneId }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCranes(prev => prev.map(c => c.crane_id === craneId ? data.crane : c));
-        setSelectedCrane(data.crane);
-        const newCount = Math.max(0, cranes.filter(c => c.crane_id !== craneId && c.status !== 'HEALTHY').length);
-        setCranesDown(newCount);
-        setImpact(localImpact(delayHours, newCount, volumeSurge));
-        setMitigationResult(null);
-      }
     } catch (e) {
       console.error(e);
     }
