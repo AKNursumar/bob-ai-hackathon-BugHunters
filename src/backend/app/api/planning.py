@@ -108,12 +108,17 @@ def generate_72hour_plan(
                 eta=s.eta,
                 service_duration_hours=s.expected_service_duration_hours,
                 priority=s.priority,
-                vessel_type=s.vessel.vessel_type if s.vessel else "GENERAL"
+                vessel_type=s.vessel.vessel_type if s.vessel else "GENERAL",
+                length_m=s.vessel.length_m if s.vessel else None,
+                beam_m=s.vessel.beam_m if s.vessel else None,
             )
             for s in vessel_schedules
         ]
         
-        berth_data = [BerthData(b.id, b.name, b.capacity_teu) for b in berths]
+        berth_data = [BerthData(
+            b.id, b.name, b.capacity_teu, b.usable_length_m, b.usable_width_m,
+            bool(b.supports_parallel_berthing), b.safety_clearance_m
+        ) for b in berths]
         crane_data = [CraneData(c.id, c.name, c.capacity_teu_per_hour) for c in cranes]
         
         # Create optimization request
@@ -299,12 +304,14 @@ def run_what_if_scenario(
                 eta=eta,
                 service_duration_hours=s.expected_service_duration_hours,
                 priority=s.priority,
-                vessel_type=s.vessel.vessel_type if s.vessel else "GENERAL"
+                vessel_type=s.vessel.vessel_type if s.vessel else "GENERAL",
+                length_m=s.vessel.length_m if s.vessel else None,
+                beam_m=s.vessel.beam_m if s.vessel else None,
             ))
         
         # Handle crane/berth unavailability
         berth_data = [
-            BerthData(b.id, b.name, b.capacity_teu)
+            BerthData(b.id, b.name, b.capacity_teu, b.usable_length_m, b.usable_width_m, bool(b.supports_parallel_berthing), b.safety_clearance_m)
             for b in berths
             if not (request.scenario_type == "BERTH_UNAVAILABLE" and 
                     b.id == request.parameters.get("berth_id"))

@@ -76,6 +76,10 @@ class Berth(Base):
     name = Column(String)
     capacity_teu = Column(Float, nullable=True)  # For container berths
     capacity_tonnage = Column(Float, nullable=True)  # For bulk berths
+    usable_length_m = Column(Float, nullable=True)
+    usable_width_m = Column(Float, nullable=True)
+    supports_parallel_berthing = Column(Integer, nullable=False, default=0)
+    safety_clearance_m = Column(Float, nullable=True)
     status = Column(String, default="AVAILABLE")  # AVAILABLE, OCCUPIED, MAINTENANCE
     created_at = Column(DateTime, default=datetime.utcnow)
     

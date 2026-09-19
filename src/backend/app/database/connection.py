@@ -3,7 +3,7 @@ PortPulse Backend — Database connection and session management
 """
 
 from pathlib import Path
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import get_settings
 
@@ -39,8 +39,27 @@ def init_db():
     """Initialize database and create all tables."""
     from app.models.database_models import Base
     Base.metadata.create_all(bind=engine)
+    _ensure_berth_columns()
     
     # Seed default operational data
     from app.database.seed_data import seed_database
     with SessionLocal() as db:
         seed_database(db)
+
+
+def _ensure_berth_columns() -> None:
+    """Add new nullable berth fields to existing SQLite installations."""
+    if "sqlite" not in str(engine.url):
+        return
+    inspector = inspect(engine)
+    columns = {column["name"] for column in inspector.get_columns("berths")}
+    additions = {
+        "usable_length_m": "FLOAT",
+        "usable_width_m": "FLOAT",
+        "supports_parallel_berthing": "INTEGER NOT NULL DEFAULT 0",
+        "safety_clearance_m": "FLOAT",
+    }
+    with engine.begin() as connection:
+        for name, definition in additions.items():
+            if name not in columns:
+                connection.execute(text(f"ALTER TABLE berths ADD COLUMN {name} {definition}"))

@@ -47,7 +47,9 @@ class VesselData:
         eta: datetime,
         service_duration_hours: float,
         priority: int = 0,
-        vessel_type: str = "GENERAL"
+        vessel_type: str = "GENERAL",
+        length_m: Optional[float] = None,
+        beam_m: Optional[float] = None,
     ):
         self.vessel_id = vessel_id
         self.vessel_name = vessel_name
@@ -55,6 +57,8 @@ class VesselData:
         self.service_duration_hours = service_duration_hours
         self.priority = priority
         self.vessel_type = vessel_type
+        self.length_m = length_m
+        self.beam_m = beam_m
 
         # Derived — store as seconds for the CP-SAT model
         self.service_duration_seconds = int(service_duration_hours * 3600)
@@ -66,12 +70,20 @@ class BerthData:
         self,
         berth_id: str,
         berth_name: str,
-        capacity: Optional[float] = None
+        capacity: Optional[float] = None,
+        usable_length_m: Optional[float] = None,
+        usable_width_m: Optional[float] = None,
+        supports_parallel_berthing: bool = False,
+        safety_clearance_m: Optional[float] = None,
     ):
         self.berth_id = berth_id
         self.berth_name = berth_name
         self.capacity = capacity
         self.available = True
+        self.usable_length_m = usable_length_m
+        self.usable_width_m = usable_width_m
+        self.supports_parallel_berthing = supports_parallel_berthing
+        self.safety_clearance_m = safety_clearance_m or 0.0
 
 
 class CraneData:
@@ -97,7 +109,8 @@ class OptimizationRequest:
         berths: List[BerthData],
         cranes: List[CraneData],
         planning_horizon_hours: int = 72,
-        horizon_start: Optional[datetime] = None
+        horizon_start: Optional[datetime] = None,
+        preferred_berth_by_vessel: Optional[Dict[str, str]] = None,
     ):
         self.port_id = port_id
         self.vessels = vessels
@@ -112,6 +125,7 @@ class OptimizationRequest:
         else:
             self.horizon_start = horizon_start
         self.horizon_end = self.horizon_start + timedelta(hours=planning_horizon_hours)
+        self.preferred_berth_by_vessel = preferred_berth_by_vessel or {}
 
 
 # ============================================================================
@@ -188,6 +202,11 @@ def _build_optimization_model(
         # Berth assignment
         berth_var = model.NewIntVar(0, num_berths - 1, f"v{v_idx}_berth")
         vessel_berth_assignments[v_idx] = berth_var
+        preferred_berth = req.preferred_berth_by_vessel.get(vessel.vessel_id)
+        if preferred_berth:
+            preferred_index = next((index for index, berth in enumerate(req.berths) if berth.berth_id == preferred_berth), None)
+            if preferred_index is not None:
+                model.Add(berth_var == preferred_index)
 
         # Crane count (1..min(3, num_cranes))
         max_cranes = max(1, min(3, len(req.cranes)))
@@ -208,11 +227,22 @@ def _build_optimization_model(
             optional_intervals[v_idx][b_idx] = opt_interval
 
     # ========================================================================
-    # No-overlap constraint per berth (correct approach)
+    # Normal berths remain exclusive. Parallel berths use physical length.
     # ========================================================================
     for b_idx in range(num_berths):
         intervals_on_berth = [optional_intervals[v_idx][b_idx] for v_idx in range(num_vessels)]
-        model.AddNoOverlap(intervals_on_berth)
+        berth = req.berths[b_idx]
+        if berth.supports_parallel_berthing and berth.usable_length_m:
+            demands = [
+                max(1, int(round((req.vessels[v_idx].length_m or 1.0) + berth.safety_clearance_m)))
+                for v_idx in range(num_vessels)
+            ]
+            model.AddCumulative(intervals_on_berth, demands, int(round(berth.usable_length_m)))
+            for v_idx, vessel in enumerate(req.vessels):
+                if vessel.vessel_type.lower() != "container":
+                    model.Add(vessel_berth_assignments[v_idx] != b_idx)
+        else:
+            model.AddNoOverlap(intervals_on_berth)
 
     # ========================================================================
     # Objective: minimise weighted waiting time

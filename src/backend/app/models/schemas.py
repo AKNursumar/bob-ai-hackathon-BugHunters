@@ -68,6 +68,10 @@ class BerthBase(BaseModel):
     name: str
     capacity_teu: Optional[float] = None
     capacity_tonnage: Optional[float] = None
+    usable_length_m: Optional[float] = None
+    usable_width_m: Optional[float] = None
+    supports_parallel_berthing: bool = False
+    safety_clearance_m: Optional[float] = None
     status: str = "AVAILABLE"
 
 
@@ -224,6 +228,52 @@ class OperationsPlanRequest(BaseModel):
     """Request to generate a 72-hour plan."""
     port_id: str
     horizon_hours: int = 72
+
+
+class SpaceOccupancyOpportunity(BaseModel):
+    berth_id: str
+    existing_vessel_ids: List[str]
+    candidate_vessel_ids: List[str]
+    usable_length_m: float
+    occupied_length_m: float
+    available_length_m: float
+    required_length_m: float
+    remaining_length_m: float
+    occupancy_percentage: float
+    fit_percentage: float
+    time_window_start: Optional[datetime] = None
+    time_window_end: Optional[datetime] = None
+    required_cranes: int
+    available_cranes: int
+    resource_feasible: bool
+    estimated_waiting_time_saved_hours: Optional[float] = None
+    status: str
+    explanation: str
+
+
+class SpaceOccupancyBerthResponse(BaseModel):
+    berth_id: str
+    berth_name: str
+    supports_parallel_berthing: bool
+    usable_length_m: Optional[float] = None
+    occupied_length_m: Optional[float] = None
+    available_length_m: Optional[float] = None
+    occupancy_percentage: Optional[float] = None
+    available_percentage: Optional[float] = None
+    analysis_status: str
+    opportunities: List[SpaceOccupancyOpportunity] = []
+
+
+class SpaceOccupancyResponse(BaseModel):
+    port_id: str
+    generated_at: datetime
+    berths: List[SpaceOccupancyBerthResponse]
+
+
+class SpaceOccupancyApplyRequest(BaseModel):
+    port_id: str
+    berth_id: str
+    candidate_vessel_ids: List[str]
 
 
 class VesselAssignmentDetail(BaseModel):

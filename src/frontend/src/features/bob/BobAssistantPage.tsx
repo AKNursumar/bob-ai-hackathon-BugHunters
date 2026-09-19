@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bot, Send, Cpu, ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { apiUrl } from '@/lib/apiUrl';
+import { usePort } from '@/contexts/PortContext';
 
 interface MCPTool {
   name: string;
@@ -20,21 +21,23 @@ const FALLBACK_TOOLS: MCPTool[] = [
   { name: 'run_what_if', description: 'Run non-destructive what-if simulations for weather and equipment disruptions', status: 'registered' },
   { name: 'generate_72_hour_plan', description: 'Compile and lock the 72-hour operational plan for terminal operators', status: 'registered' },
   { name: 'explain_congestion', description: 'Explain forecast risk drivers with human-readable feature importance', status: 'registered' },
+  { name: 'analyze_space_occupancy', description: 'Identify safe parallel berthing opportunities in unused berth space', status: 'registered' },
 ];
 
-function resolveToolCall(text: string): { tool: string; args: Record<string, unknown> } | null {
+function resolveToolCall(text: string, portId: string): { tool: string; args: Record<string, unknown> } | null {
   const lower = text.toLowerCase();
-  if (lower.includes('watch') || lower.includes('handover') || lower.includes('notes')) return { tool: 'explain_congestion', args: { port_id: 'port776', horizon: '24h' } };
-  if (lower.includes('vessel schedule') || lower.includes('arrival')) return { tool: 'get_vessel_schedule', args: { port_id: 'port776', horizon_hours: 72 } };
-  if (lower.includes('status') || lower.includes('port')) return { tool: 'get_port_status', args: { port_id: 'port776' } };
-  if (lower.includes('berth')) return { tool: 'get_berth_status', args: { port_id: 'port776' } };
-  if (lower.includes('crane')) return { tool: 'get_crane_status', args: { port_id: 'port776' } };
-  if (lower.includes('forecast') || lower.includes('predict') || lower.includes('congestion')) return { tool: 'get_congestion_forecast', args: { port_id: 'port776', horizon: '24h' } };
-  if (lower.includes('hotspot') || lower.includes('bottleneck')) return { tool: 'get_congestion_hotspots', args: { port_id: 'port776', horizon_hours: 24 } };
-  if (lower.includes('optimis') || lower.includes('optimize') || lower.includes('solver')) return { tool: 'optimise_schedule', args: { port_id: 'port776', horizon_hours: 72 } };
-  if (lower.includes('plan') || lower.includes('72')) return { tool: 'generate_72_hour_plan', args: { port_id: 'port776' } };
-  if (lower.includes('what-if') || lower.includes('scenario') || lower.includes('simulate')) return { tool: 'run_what_if', args: { port_id: 'port776', scenario_type: 'VESSEL_DELAY', parameters: { vessel_id: 'VS-001', delay_hours: 4 } } };
-  if (lower.startsWith('execute ')) return { tool: text.slice('Execute '.length).trim(), args: { port_id: 'port776' } };
+  if (lower.includes('watch') || lower.includes('handover') || lower.includes('notes')) return { tool: 'explain_congestion', args: { port_id: portId, horizon: '24h' } };
+  if (lower.includes('vessel schedule') || lower.includes('arrival')) return { tool: 'get_vessel_schedule', args: { port_id: portId, horizon_hours: 72 } };
+  if (lower.includes('status') || lower.includes('port')) return { tool: 'get_port_status', args: { port_id: portId } };
+  if (lower.includes('space') || lower.includes('occupancy') || lower.includes('unused berth') || lower.includes('parallel berth') || lower.includes('parallel berthing') || lower.includes('fit vessels')) return { tool: 'analyze_space_occupancy', args: { port_id: portId, include_waiting_vessels: true } };
+  if (lower.includes('berth')) return { tool: 'get_berth_status', args: { port_id: portId } };
+  if (lower.includes('crane')) return { tool: 'get_crane_status', args: { port_id: portId } };
+  if (lower.includes('forecast') || lower.includes('predict') || lower.includes('congestion')) return { tool: 'get_congestion_forecast', args: { port_id: portId, horizon: '24h' } };
+  if (lower.includes('hotspot') || lower.includes('bottleneck')) return { tool: 'get_congestion_hotspots', args: { port_id: portId, horizon_hours: 24 } };
+  if (lower.includes('optimis') || lower.includes('optimize') || lower.includes('solver')) return { tool: 'optimise_schedule', args: { port_id: portId, horizon_hours: 72 } };
+  if (lower.includes('plan') || lower.includes('72')) return { tool: 'generate_72_hour_plan', args: { port_id: portId } };
+  if (lower.includes('what-if') || lower.includes('scenario') || lower.includes('simulate')) return { tool: 'run_what_if', args: { port_id: portId, scenario_type: 'VESSEL_DELAY', parameters: { vessel_id: 'VS-001', delay_hours: 4 } } };
+  if (lower.startsWith('execute ')) return { tool: text.slice('Execute '.length).trim(), args: { port_id: portId } };
   return null;
 }
 
@@ -90,6 +93,7 @@ function BobResponseCard({ text }: { text: string }) {
 }
 
 export function BobAssistantPage() {
+  const { selectedPort } = usePort();
   const [mcpTools, setMcpTools] = useState<MCPTool[]>(FALLBACK_TOOLS);
   const [toolCount, setToolCount] = useState(FALLBACK_TOOLS.length);
   const [activePrompt, setActivePrompt] = useState('');
@@ -133,7 +137,7 @@ export function BobAssistantPage() {
     setIsExecuting(true);
 
     try {
-      const resolved = resolveToolCall(textToSend);
+      const resolved = resolveToolCall(textToSend, selectedPort.id);
       if (resolved) {
         const res = await fetch(apiUrl(`/api/v1/mcp/tools/${resolved.tool}`), {
           method: 'POST',
@@ -169,7 +173,7 @@ export function BobAssistantPage() {
     <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl fade-in-up">
       <PageHeader
         title="IBM Bob"
-        subtitle="AI operations copilot · Model Context Protocol (MCP) connected · 10 operational tools"
+        subtitle="AI operations copilot · Model Context Protocol (MCP) connected · 11 operational tools"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

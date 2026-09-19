@@ -455,6 +455,44 @@ class GetCraneStatusTool(MCPTool):
             db.close()
 
 
+class AnalyzeSpaceOccupancyTool(MCPTool):
+    def __init__(self):
+        super().__init__(
+            name="analyze_space_occupancy",
+            description=(
+                "Analyze scheduled berth occupancy and identify safe, physically feasible opportunities "
+                "to accommodate additional compatible vessels in unused berth space."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "port_id": {"type": "string"},
+                    "berth_id": {"type": "string", "description": "Optional berth filter"},
+                    "include_waiting_vessels": {"type": "boolean", "default": True},
+                },
+                "required": ["port_id"],
+            },
+        )
+
+    async def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        db = _get_db_factory()()
+        try:
+            from app.services.space_occupancy_service import SpaceOccupancyAnalyzer
+            data = SpaceOccupancyAnalyzer().analyze_port(
+                db,
+                arguments.get("port_id", ""),
+                arguments.get("berth_id"),
+                bool(arguments.get("include_waiting_vessels", True)),
+            )
+            opportunity_count = sum(len(berth["opportunities"]) for berth in data["berths"])
+            return {"success": True, **data, "opportunity_count": opportunity_count}
+        except Exception as e:
+            logger.error(f"analyze_space_occupancy error: {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
+        finally:
+            db.close()
+
+
 class OptimiseScheduleTool(MCPTool):
     def __init__(self):
         super().__init__(
@@ -531,10 +569,12 @@ class OptimiseScheduleTool(MCPTool):
                     service_duration_hours=s.expected_service_duration_hours,
                     priority=s.priority,
                     vessel_type=s.vessel.vessel_type if s.vessel else "GENERAL",
+                    length_m=s.vessel.length_m if s.vessel else None,
+                    beam_m=s.vessel.beam_m if s.vessel else None,
                 )
                 for s in vessel_schedules
             ]
-            berth_data = [BerthData(b.id, b.name, b.capacity_teu) for b in berths]
+            berth_data = [BerthData(b.id, b.name, b.capacity_teu, b.usable_length_m, b.usable_width_m, bool(b.supports_parallel_berthing), b.safety_clearance_m) for b in berths]
             crane_data = [CraneData(c.id, c.name, c.capacity_teu_per_hour) for c in cranes]
 
             opt_req = OptRequest(
@@ -668,10 +708,12 @@ class RunWhatIfTool(MCPTool):
                     service_duration_hours=s.expected_service_duration_hours,
                     priority=s.priority,
                     vessel_type=s.vessel.vessel_type if s.vessel else "GENERAL",
+                    length_m=s.vessel.length_m if s.vessel else None,
+                    beam_m=s.vessel.beam_m if s.vessel else None,
                 ))
 
             berth_data = [
-                BerthData(b.id, b.name, b.capacity_teu)
+                BerthData(b.id, b.name, b.capacity_teu, b.usable_length_m, b.usable_width_m, bool(b.supports_parallel_berthing), b.safety_clearance_m)
                 for b in berths
                 if not (scenario_type == "BERTH_UNAVAILABLE" and b.id == parameters.get("berth_id"))
             ]
@@ -801,10 +843,12 @@ class Generate72HourPlanTool(MCPTool):
                     service_duration_hours=s.expected_service_duration_hours,
                     priority=s.priority,
                     vessel_type=s.vessel.vessel_type if s.vessel else "GENERAL",
+                    length_m=s.vessel.length_m if s.vessel else None,
+                    beam_m=s.vessel.beam_m if s.vessel else None,
                 )
                 for s in vessel_schedules
             ]
-            berth_data = [BerthData(b.id, b.name, b.capacity_teu) for b in berths]
+            berth_data = [BerthData(b.id, b.name, b.capacity_teu, b.usable_length_m, b.usable_width_m, bool(b.supports_parallel_berthing), b.safety_clearance_m) for b in berths]
             crane_data = [CraneData(c.id, c.name, c.capacity_teu_per_hour) for c in cranes]
 
             opt_req = OptRequest(
@@ -1010,6 +1054,7 @@ class MCPServer:
             GetCongestionHotspotsTool(),
             GetBerthStatusTool(),
             GetCraneStatusTool(),
+            AnalyzeSpaceOccupancyTool(),
             OptimiseScheduleTool(),
             RunWhatIfTool(),
             Generate72HourPlanTool(),

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Play, Download, CheckCircle2, Clock, Anchor, Ship } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { usePort } from '@/contexts/PortContext';
 import { apiUrl } from '@/lib/apiUrl';
+import { SpaceOccupancySection, type SpaceOpportunity } from './SpaceOccupancySection';
 
 export interface PlannedAssignment {
   vesselId: string;
@@ -120,6 +121,27 @@ export function PlannerPage() {
   const [assignments, setAssignments] = useState<PlannedAssignment[]>(INITIAL_ASSIGNMENTS);
   const [planGeneratedAt, setPlanGeneratedAt] = useState<string>(new Date().toLocaleTimeString());
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [spaceBerths, setSpaceBerths] = useState<Array<{ berth_id: string; berth_name: string; supports_parallel_berthing: boolean; usable_length_m?: number; occupied_length_m?: number; available_length_m?: number; opportunities: SpaceOpportunity[]; analysis_status: string }>>([]);
+  const [isSpaceLoading, setIsSpaceLoading] = useState(true);
+  const [isApplyingSpace, setIsApplyingSpace] = useState(false);
+
+  const loadSpaceOccupancy = async () => {
+    setIsSpaceLoading(true);
+    try {
+      const response = await fetch(apiUrl(`/api/v1/space-occupancy/${selectedPort.id}`));
+      if (!response.ok) throw new Error('Space analysis unavailable');
+      const data = await response.json();
+      setSpaceBerths(data.berths ?? []);
+    } catch {
+      setSpaceBerths([]);
+    } finally {
+      setIsSpaceLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadSpaceOccupancy();
+  }, [selectedPort.id]);
 
   const handleGeneratePlan = async () => {
     setIsGenerating(true);
@@ -172,6 +194,25 @@ export function PlannerPage() {
     a.remove();
   };
 
+  const handleApplySpace = async (opportunity: SpaceOpportunity) => {
+    setIsApplyingSpace(true);
+    try {
+      const response = await fetch(apiUrl('/api/v1/space-occupancy/apply'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ port_id: selectedPort.id, berth_id: opportunity.berth_id, candidate_vessel_ids: opportunity.candidate_vessel_ids }),
+      });
+      if (!response.ok) throw new Error('Opportunity could not be applied');
+      await handleGeneratePlan();
+      setStatusMessage('Opportunity validated and applied through the constraint solver.');
+      await loadSpaceOccupancy();
+    } catch {
+      setStatusMessage('The opportunity changed before it could be applied. Refresh the analysis and try again.');
+    } finally {
+      setIsApplyingSpace(false);
+    }
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl fade-in-up">
       <PageHeader
@@ -215,7 +256,7 @@ export function PlannerPage() {
           { label: 'Planning Horizon', value: '72', unit: 'hours', color: '#071A2B' },
           { label: 'Vessels Scheduled', value: assignments.length.toString(), unit: 'vessels', color: '#1677C8' },
           { label: 'Average Wait Time', value: '0.9', unit: 'hours', color: '#16A34A', note: '↓ 68% vs FIFO' },
-          { label: 'Berth Conflicts', value: '0', unit: 'detected', color: '#617080', note: `Solved: ${planGeneratedAt}` },
+          { label: 'Parallel Opportunities', value: spaceBerths.reduce((sum, berth) => sum + berth.opportunities.length, 0).toString(), unit: 'found', color: '#16A34A', note: 'Backend spatial analysis' },
         ].map((kpi) => (
           <div key={kpi.label} className="hl-card p-5 rounded-xl" style={{ borderTop: `2px solid ${kpi.color}` }}>
             <p className="eyebrow mb-3">{kpi.label}</p>
@@ -227,6 +268,8 @@ export function PlannerPage() {
           </div>
         ))}
       </div>
+
+      <SpaceOccupancySection berths={spaceBerths} isLoading={isSpaceLoading} onApply={handleApplySpace} isApplying={isApplyingSpace} />
 
       {/* Visual timeline */}
       <PlanTimeline assignments={assignments} />

@@ -13,7 +13,7 @@ from app.core.config import get_settings
 from app.core.logging_config import setup_logging, get_logger
 from app.database.connection import init_db
 from app.services.ais_service import start_ais_listener
-from app.api import health, ports, congestion, optimization, planning, dashboard, mcp as mcp_routes
+from app.api import health, ports, congestion, optimization, planning, dashboard, space_occupancy, mcp as mcp_routes
 
 logger = get_logger("app")
 settings = get_settings()
@@ -79,6 +79,7 @@ app.include_router(congestion.router, prefix="/api/v1", tags=["Congestion"])
 app.include_router(optimization.router, prefix="/api/v1", tags=["Optimization"])
 app.include_router(planning.router, prefix="/api/v1", tags=["Planning"])
 app.include_router(dashboard.router, prefix="/api/v1", tags=["Dashboard"])
+app.include_router(space_occupancy.router, prefix="/api/v1", tags=["Space Occupancy"])
 app.include_router(mcp_routes.router, prefix="/api/v1", tags=["MCP"])
 
 

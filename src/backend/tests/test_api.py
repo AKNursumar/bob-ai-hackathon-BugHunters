@@ -156,11 +156,12 @@ EXPECTED_MCP_TOOLS = {
     "run_what_if",
     "generate_72_hour_plan",
     "explain_congestion",
+    "analyze_space_occupancy",
 }
 
 
 def test_mcp_tools_list():
-    """All 10 expected MCP tools are registered."""
+    """All expected MCP tools are registered."""
     response = client.get("/api/v1/mcp/tools")
     assert response.status_code == 200
     data = response.json()

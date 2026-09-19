@@ -90,11 +90,13 @@ def run_optimization(
                 eta=schedule.eta,
                 service_duration_hours=schedule.expected_service_duration_hours,
                 priority=schedule.priority,
-                vessel_type=vessel.vessel_type if vessel else "GENERAL"
+                vessel_type=vessel.vessel_type if vessel else "GENERAL",
+                length_m=vessel.length_m if vessel else None,
+                beam_m=vessel.beam_m if vessel else None,
             ))
         
         berth_data = [
-            BerthData(berth.id, berth.name, berth.capacity_teu)
+            BerthData(berth.id, berth.name, berth.capacity_teu, berth.usable_length_m, berth.usable_width_m, bool(berth.supports_parallel_berthing), berth.safety_clearance_m)
             for berth in berths
         ]
         
