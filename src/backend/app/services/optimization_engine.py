@@ -47,9 +47,7 @@ class VesselData:
         eta: datetime,
         service_duration_hours: float,
         priority: int = 0,
-        vessel_type: str = "GENERAL",
-        length_m: Optional[float] = None,
-        beam_m: Optional[float] = None,
+        vessel_type: str = "GENERAL"
     ):
         self.vessel_id = vessel_id
         self.vessel_name = vessel_name
@@ -57,8 +55,6 @@ class VesselData:
         self.service_duration_hours = service_duration_hours
         self.priority = priority
         self.vessel_type = vessel_type
-        self.length_m = length_m
-        self.beam_m = beam_m
 
         # Derived — store as seconds for the CP-SAT model
         self.service_duration_seconds = int(service_duration_hours * 3600)
@@ -70,20 +66,12 @@ class BerthData:
         self,
         berth_id: str,
         berth_name: str,
-        capacity: Optional[float] = None,
-        usable_length_m: Optional[float] = None,
-        usable_width_m: Optional[float] = None,
-        supports_parallel_berthing: bool = False,
-        safety_clearance_m: Optional[float] = None,
+        capacity: Optional[float] = None
     ):
         self.berth_id = berth_id
         self.berth_name = berth_name
         self.capacity = capacity
         self.available = True
-        self.usable_length_m = usable_length_m
-        self.usable_width_m = usable_width_m
-        self.supports_parallel_berthing = supports_parallel_berthing
-        self.safety_clearance_m = safety_clearance_m or 0.0
 
 
 class CraneData:
@@ -109,8 +97,7 @@ class OptimizationRequest:
         berths: List[BerthData],
         cranes: List[CraneData],
         planning_horizon_hours: int = 72,
-        horizon_start: Optional[datetime] = None,
-        preferred_berth_by_vessel: Optional[Dict[str, str]] = None,
+        horizon_start: Optional[datetime] = None
     ):
         self.port_id = port_id
         self.vessels = vessels
@@ -125,7 +112,6 @@ class OptimizationRequest:
         else:
             self.horizon_start = horizon_start
         self.horizon_end = self.horizon_start + timedelta(hours=planning_horizon_hours)
-        self.preferred_berth_by_vessel = preferred_berth_by_vessel or {}
 
 
 # ============================================================================
@@ -184,65 +170,92 @@ def _build_optimization_model(
     vessel_end_times: Dict[int, Any] = {}
     vessel_berth_assignments: Dict[int, Any] = {}
     vessel_crane_counts: Dict[int, Any] = {}
+    vessel_actual_durations: Dict[int, Any] = {}
     # optional_intervals[v_idx][b_idx] = optional interval variable
     optional_intervals: Dict[int, Dict[int, Any]] = {}
+    
+    master_intervals = []
+    master_crane_demands = []
 
     for v_idx, vessel in enumerate(req.vessels):
         eta_aware = _utc(vessel.eta)
         eta_offset = max(0, int((eta_aware - req.horizon_start).total_seconds()))
-        svc_sec = vessel.service_duration_seconds
+        
+        # Calculate dynamic durations based on cranes
+        dur1 = vessel.service_duration_seconds
+        dur2 = max(1, dur1 // 2)
+        dur3 = max(1, dur1 // 3)
 
         start_var = model.NewIntVar(eta_offset, horizon_seconds, f"v{v_idx}_start")
-        end_var = model.NewIntVar(eta_offset + svc_sec, horizon_seconds + svc_sec, f"v{v_idx}_end")
-        model.Add(end_var == start_var + svc_sec)
+        end_var = model.NewIntVar(eta_offset, horizon_seconds + dur1, f"v{v_idx}_end")
+        actual_duration_var = model.NewIntVar(dur3, dur1, f"v{v_idx}_duration")
+        
+        model.Add(end_var == start_var + actual_duration_var)
 
         vessel_start_times[v_idx] = start_var
         vessel_end_times[v_idx] = end_var
+        vessel_actual_durations[v_idx] = actual_duration_var
 
         # Berth assignment
         berth_var = model.NewIntVar(0, num_berths - 1, f"v{v_idx}_berth")
         vessel_berth_assignments[v_idx] = berth_var
-        preferred_berth = req.preferred_berth_by_vessel.get(vessel.vessel_id)
-        if preferred_berth:
-            preferred_index = next((index for index, berth in enumerate(req.berths) if berth.berth_id == preferred_berth), None)
-            if preferred_index is not None:
-                model.Add(berth_var == preferred_index)
 
-        # Crane count (1..min(3, num_cranes))
+        # Crane count logic (1..min(3, num_cranes))
         max_cranes = max(1, min(3, len(req.cranes)))
         crane_var = model.NewIntVar(1, max_cranes, f"v{v_idx}_cranes")
         vessel_crane_counts[v_idx] = crane_var
 
-        # Per-berth optional intervals — the key fix for the no-overlap constraint
+        # Map crane count to service duration
+        b1 = model.NewBoolVar(f'v{v_idx}_c1')
+        b2 = model.NewBoolVar(f'v{v_idx}_c2')
+        b3 = model.NewBoolVar(f'v{v_idx}_c3')
+        model.AddExactlyOne([b1, b2, b3])
+        
+        model.Add(crane_var == 1).OnlyEnforceIf(b1)
+        model.Add(actual_duration_var == dur1).OnlyEnforceIf(b1)
+        
+        if max_cranes >= 2:
+            model.Add(crane_var == 2).OnlyEnforceIf(b2)
+            model.Add(actual_duration_var == dur2).OnlyEnforceIf(b2)
+        else:
+            model.Add(b2 == 0)
+            
+        if max_cranes >= 3:
+            model.Add(crane_var == 3).OnlyEnforceIf(b3)
+            model.Add(actual_duration_var == dur3).OnlyEnforceIf(b3)
+        else:
+            model.Add(b3 == 0)
+
+        # Master interval for crane cumulative constraint
+        master_interval = model.NewIntervalVar(start_var, actual_duration_var, end_var, f"v{v_idx}_master_interval")
+        master_intervals.append(master_interval)
+        master_crane_demands.append(crane_var)
+
+        # Per-berth optional intervals for no-overlap constraint
         optional_intervals[v_idx] = {}
         for b_idx in range(num_berths):
-            # is_present is True iff vessel v_idx is assigned to berth b_idx
             is_present = model.NewBoolVar(f"v{v_idx}_b{b_idx}_present")
             model.Add(berth_var == b_idx).OnlyEnforceIf(is_present)
             model.Add(berth_var != b_idx).OnlyEnforceIf(is_present.Not())
 
             opt_interval = model.NewOptionalIntervalVar(
-                start_var, svc_sec, end_var, is_present, f"v{v_idx}_b{b_idx}_interval"
+                start_var, actual_duration_var, end_var, is_present, f"v{v_idx}_b{b_idx}_interval"
             )
             optional_intervals[v_idx][b_idx] = opt_interval
 
     # ========================================================================
-    # Normal berths remain exclusive. Parallel berths use physical length.
+    # No-overlap constraint per berth (correct approach)
     # ========================================================================
     for b_idx in range(num_berths):
         intervals_on_berth = [optional_intervals[v_idx][b_idx] for v_idx in range(num_vessels)]
-        berth = req.berths[b_idx]
-        if berth.supports_parallel_berthing and berth.usable_length_m:
-            demands = [
-                max(1, int(round((req.vessels[v_idx].length_m or 1.0) + berth.safety_clearance_m)))
-                for v_idx in range(num_vessels)
-            ]
-            model.AddCumulative(intervals_on_berth, demands, int(round(berth.usable_length_m)))
-            for v_idx, vessel in enumerate(req.vessels):
-                if vessel.vessel_type.lower() != "container":
-                    model.Add(vessel_berth_assignments[v_idx] != b_idx)
-        else:
-            model.AddNoOverlap(intervals_on_berth)
+        model.AddNoOverlap(intervals_on_berth)
+
+    # ========================================================================
+    # Cumulative crane constraint (Port-wide resource limit)
+    # ========================================================================
+    total_cranes = len(req.cranes)
+    if total_cranes > 0 and num_vessels > 0:
+        model.AddCumulative(master_intervals, master_crane_demands, total_cranes)
 
     # ========================================================================
     # Objective: minimise weighted waiting time
@@ -252,8 +265,8 @@ def _build_optimization_model(
         eta_aware = _utc(vessel.eta)
         eta_offset = max(0, int((eta_aware - req.horizon_start).total_seconds()))
         waiting = vessel_start_times[v_idx] - eta_offset
-        # Higher priority (larger number) → lower weight → scheduled earlier
-        priority_weight = max(1, 10 - vessel.priority * 2)
+        # Higher priority (larger number) -> higher weight -> heavier penalty for waiting
+        priority_weight = 1 + (vessel.priority * 5)
         total_weighted_wait.append(waiting * priority_weight)
 
     model.Minimize(sum(total_weighted_wait))
@@ -265,6 +278,7 @@ def _build_optimization_model(
         "vessel_end_times": vessel_end_times,
         "vessel_berth_assignments": vessel_berth_assignments,
         "vessel_crane_counts": vessel_crane_counts,
+        "vessel_actual_durations": vessel_actual_durations,
     }
 
     return model, variables
