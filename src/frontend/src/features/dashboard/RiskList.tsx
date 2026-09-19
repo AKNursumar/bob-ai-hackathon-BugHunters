@@ -1,5 +1,3 @@
-import { ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ErrorState } from '@/components/ErrorState';
@@ -59,15 +57,6 @@ export function RiskList({ risks, isLoading, isError, onRetry }: RiskListProps) 
         {risks.map((risk) => (
           <RiskItem key={risk.id} risk={risk} />
         ))}
-      </div>
-      <div className="flex justify-end">
-        <Link
-          to="/hotspots"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#00b4a6] hover:text-[#009e91] transition-colors"
-        >
-          View Hotspots
-          <ArrowRight className="w-3 h-3" />
-        </Link>
       </div>
     </div>
   );

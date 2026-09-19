@@ -14,7 +14,6 @@ import { BobAssistantPage } from '@/features/bob/BobAssistantPage';
 import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
 import { AlertsPage } from '@/features/alerts/AlertsPage';
 import { ReportsPage } from '@/features/reports/ReportsPage';
-import { HotspotsPage } from '@/features/hotspots/HotspotsPage';
 
 import { PortProvider } from '@/contexts/PortContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -49,7 +48,6 @@ export function App() {
               <Route path="/monitoring" element={<PortMonitoringPage />} />
               <Route path="/planner" element={<PlannerPage />} />
               <Route path="/predictions" element={<PredictionsPage />} />
-              <Route path="/hotspots" element={<HotspotsPage />} />
               <Route path="/optimization" element={<OptimizationPage />} />
               <Route path="/simulation" element={<SimulationPage />} />
               <Route path="/bob" element={<BobAssistantPage />} />

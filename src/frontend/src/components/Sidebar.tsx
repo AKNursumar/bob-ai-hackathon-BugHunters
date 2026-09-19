@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Calendar,
   TrendingUp,
-  MapPin,
   BarChart2,
   Layers,
   FlaskConical,
@@ -51,7 +50,6 @@ const NAV_SECTIONS: NavSection[] = [
     heading: 'Intelligence',
     items: [
       { label: 'Predictions', icon: TrendingUp, to: '/predictions' },
-      { label: 'Hotspots', icon: MapPin, to: '/hotspots' },
       { label: 'Analytics', icon: BarChart2, to: '/analytics' },
     ],
   },

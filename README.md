@@ -134,8 +134,8 @@ API Docs: `http://localhost:8001/docs`
 
 > Transparent disclosure for judges.
 
-- **Port-level forecasting only:** The XGBoost model predicts port-level congestion pressure. Individual berth-level prediction is not available due to the absence of consistent public historical berth data across all five Indian ports.
-- **AIS requires API key:** Live AIS vessel tracking requires a valid `AISSTREAM_API_KEY`. Without it, vessel counts show 0 — the forecasting, optimisation, and planning features remain fully functional.
+- **Port-level forecasting:** The XGBoost model predicts congestion pressure at the port level. Berth-level forecasting is outside the current scope due to the lack of consistent, publicly available historical berth-level data across all five Indian ports.
+- **API & external data availability:** Live vessel activity and certain operational indicators rely on external APIs and data sources. Their availability, update frequency, rate limits, and access requirements may vary, which can affect the freshness of real-time inputs. Forecasting, optimisation, and planning workflows continue to operate using available historical and operational data.
 - **No persistent user authentication:** The platform is a single-tenant operations dashboard; multi-user authentication is not implemented.
 - **OR-Tools optional:** The constraint-solver optimisation requires `ortools` installed separately. A greedy fallback algorithm runs automatically if OR-Tools is unavailable.
 
