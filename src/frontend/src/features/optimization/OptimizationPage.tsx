@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Cpu, CheckCircle2, TrendingDown, Clock, Zap, ShieldCheck } from 'lucide-react';
+import { Cpu, CheckCircle2, TrendingDown, Clock, Zap, ShieldCheck, Bot } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { apiUrl } from '@/lib/apiUrl';
 import { usePort } from '@/contexts/PortContext';
@@ -10,6 +10,7 @@ export function OptimizationPage() {
   const [timeoutSec, setTimeoutSec] = useState(30);
   const [isSolving, setIsSolving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [explanation, setExplanation] = useState<string | null>(null);
   const [metrics, setMetrics] = useState({
     baselineWaitingHours: 26.5,
     optimizedWaitingHours: 7.2,
@@ -22,6 +23,7 @@ export function OptimizationPage() {
   const handleRunOptimization = async () => {
     setIsSolving(true);
     setStatusMessage(null);
+    setExplanation(null);
     try {
       const res = await fetch(apiUrl('/api/v1/optimization/compare'), {
         method: 'POST',
@@ -39,7 +41,8 @@ export function OptimizationPage() {
           solverUsed: im.is_optimal ? 'Google OR-Tools CP-SAT' : 'Greedy Heuristic Solver',
           assignmentsCount: (data.optimized_plan ?? data.optimized?.assignments ?? []).length || 8,
         });
-        setStatusMessage(data.explanation || 'Optimisation successfully solved using backend constraint engine.');
+        setExplanation(data.explanation || null);
+        setStatusMessage('Optimisation successfully solved using backend constraint engine. Data updated.');
       } else {
         setStatusMessage('Solver returned no results. Using pre-configured scenario metrics.');
       }
@@ -111,6 +114,21 @@ export function OptimizationPage() {
           <span>Engine: <strong className="text-[#071A2B]">{metrics.solverUsed}</strong></span>
         </div>
       </div>
+
+      {/* Dynamic AI Explanation */}
+      {explanation && (
+        <div className="hl-card p-5 rounded-xl fade-in-up" style={{ background: '#F0FDF4', borderLeft: '4px solid #16A34A' }}>
+          <div className="flex items-start gap-3">
+            <Bot className="w-5 h-5 text-[#16A34A] shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-[13px] font-bold text-[#166534] mb-1">AI Optimisation Summary</h3>
+              <p className="text-[13px] text-[#166534]/80 leading-relaxed">
+                {explanation}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* KPI comparison */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
