@@ -47,17 +47,20 @@ class VesselData:
         eta: datetime,
         service_duration_hours: float,
         priority: int = 0,
-        vessel_type: str = "GENERAL"
+        vessel_type: str = "GENERAL",
+        length_m: Optional[float] = None,
+        beam_m: Optional[float] = None,
+        **kwargs
     ):
         self.vessel_id = vessel_id
         self.vessel_name = vessel_name
         self.eta = eta
+        self.service_duration_seconds = int(service_duration_hours * 3600)
         self.service_duration_hours = service_duration_hours
         self.priority = priority
         self.vessel_type = vessel_type
-
-        # Derived — store as seconds for the CP-SAT model
-        self.service_duration_seconds = int(service_duration_hours * 3600)
+        self.length_m = length_m
+        self.beam_m = beam_m
 
 
 class BerthData:
@@ -66,11 +69,20 @@ class BerthData:
         self,
         berth_id: str,
         berth_name: str,
-        capacity: Optional[float] = None
+        capacity: Optional[float] = None,
+        usable_length_m: Optional[float] = None,
+        usable_width_m: Optional[float] = None,
+        supports_parallel_berthing: bool = False,
+        safety_clearance_m: Optional[float] = None,
+        **kwargs
     ):
         self.berth_id = berth_id
         self.berth_name = berth_name
         self.capacity = capacity
+        self.usable_length_m = usable_length_m
+        self.usable_width_m = usable_width_m
+        self.supports_parallel_berthing = supports_parallel_berthing
+        self.safety_clearance_m = safety_clearance_m
         self.available = True
 
 
