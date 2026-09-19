@@ -39,7 +39,7 @@ export function OptimizationPage() {
           solverUsed: im.is_optimal ? 'Google OR-Tools CP-SAT' : 'Greedy Heuristic Solver',
           assignmentsCount: (data.optimized_plan ?? data.optimized?.assignments ?? []).length || 8,
         });
-        setStatusMessage('Optimisation successfully solved using backend constraint engine.');
+        setStatusMessage(data.explanation || 'Optimisation successfully solved using backend constraint engine.');
       } else {
         setStatusMessage('Solver returned no results. Using pre-configured scenario metrics.');
       }
