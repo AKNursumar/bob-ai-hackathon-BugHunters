@@ -31,14 +31,22 @@ const INITIAL_ASSIGNMENTS: PlannedAssignment[] = [
 // Visual timeline component
 function PlanTimeline({ assignments }: { assignments: PlannedAssignment[] }) {
   const timeLabels = ['NOW', '+12H', '+24H', '+36H', '+48H', '+60H', '+72H'];
+  const now = Date.now();
+  const horizon = 72 * 60 * 60 * 1000;
 
-  // Map vessels to timeline rows with pseudo-random but deterministic positions
-  const rows = assignments.slice(0, 5).map((a, i) => ({
-    ...a,
-    startPct: (i * 13) % 65,
-    widthPct: 18 + (i * 7) % 20,
-    color: a.priority === 1 ? '#DC2626' : a.priority === -1 ? '#98A8B4' : '#1677C8',
-  }));
+  const rows = assignments.slice(0, 8).map((a, i) => {
+    const start = Date.parse(a.plannedStart);
+    const end = Date.parse(a.plannedEnd);
+    const hasWindow = Number.isFinite(start) && Number.isFinite(end) && end > start;
+    const startPct = hasWindow ? Math.max(0, Math.min(100, ((start - now) / horizon) * 100)) : (i * 13) % 65;
+    const widthPct = hasWindow ? Math.max(3, Math.min(100 - startPct, ((end - start) / horizon) * 100)) : 18 + (i * 7) % 20;
+    return {
+      ...a,
+      startPct,
+      widthPct,
+      color: a.priority === 1 ? '#DC2626' : a.priority === -1 ? '#98A8B4' : '#1677C8',
+    };
+  });
 
   return (
     <div className="hl-card rounded-xl overflow-hidden">
@@ -115,6 +123,20 @@ function PlanTimeline({ assignments }: { assignments: PlannedAssignment[] }) {
   );
 }
 
+function mapAssignments(raw: Array<Record<string, unknown>>): PlannedAssignment[] {
+  return raw.map((a, i) => ({
+    vesselId: String(a.vessel_id ?? `V-${i + 101}`),
+    vesselName: String(a.vessel_name ?? a.vessel_id ?? `Vessel ${i + 1}`),
+    vesselType: String(a.vessel_type ?? 'Container'),
+    assignedBerth: String(a.assigned_berth ?? `B${i + 1}`),
+    eta: a.eta ? new Date(String(a.eta)).toLocaleString() : 'TBD',
+    plannedStart: a.service_start ?? a.planned_start ? new Date(String(a.service_start ?? a.planned_start)).toISOString() : 'TBD',
+    plannedEnd: a.service_end ?? a.planned_end ? new Date(String(a.service_end ?? a.planned_end)).toISOString() : 'TBD',
+    waitingHours: Number(a.expected_waiting_time_hours ?? a.waiting_time_hours ?? 0),
+    priority: Number(a.priority ?? 0),
+  }));
+}
+
 export function PlannerPage() {
   const { selectedPort } = usePort();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -123,7 +145,9 @@ export function PlannerPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [spaceBerths, setSpaceBerths] = useState<Array<{ berth_id: string; berth_name: string; supports_parallel_berthing: boolean; usable_length_m?: number; occupied_length_m?: number; available_length_m?: number; opportunities: SpaceOpportunity[]; analysis_status: string }>>([]);
   const [isSpaceLoading, setIsSpaceLoading] = useState(true);
-  const [isApplyingSpace, setIsApplyingSpace] = useState(false);
+  const [applyingOpportunityKey, setApplyingOpportunityKey] = useState<string | null>(null);
+  const [appliedOpportunityKeys, setAppliedOpportunityKeys] = useState<Set<string>>(new Set());
+  const [averageWaitHours, setAverageWaitHours] = useState(0.9);
 
   const loadSpaceOccupancy = async () => {
     setIsSpaceLoading(true);
@@ -156,17 +180,8 @@ export function PlannerPage() {
         const data = await res.json();
         const raw: Array<Record<string, unknown>> = data.vessel_assignments ?? data.assignments ?? [];
         if (raw.length > 0) {
-          setAssignments(raw.map((a, i) => ({
-            vesselId: String(a.vessel_id ?? `V-${i + 101}`),
-            vesselName: String(a.vessel_name ?? a.vessel_id ?? `Vessel ${i + 1}`),
-            vesselType: String(a.vessel_type ?? 'Container'),
-            assignedBerth: String(a.assigned_berth ?? `B${i + 1}`),
-            eta: a.eta ? new Date(String(a.eta)).toLocaleString() : 'TBD',
-            plannedStart: a.service_start ? new Date(String(a.service_start)).toLocaleString() : 'TBD',
-            plannedEnd: a.service_end ? new Date(String(a.service_end)).toLocaleString() : 'TBD',
-            waitingHours: Number(a.expected_waiting_time_hours ?? 0),
-            priority: Number(a.priority ?? 0),
-          })));
+          setAssignments(mapAssignments(raw));
+          setAverageWaitHours(Number(data.average_waiting_time_hours ?? 0));
         } else {
           setAssignments(INITIAL_ASSIGNMENTS);
         }
@@ -195,7 +210,8 @@ export function PlannerPage() {
   };
 
   const handleApplySpace = async (opportunity: SpaceOpportunity) => {
-    setIsApplyingSpace(true);
+    const opportunityKey = `${opportunity.berth_id}:${opportunity.candidate_vessel_ids.join(',')}`;
+    setApplyingOpportunityKey(opportunityKey);
     try {
       const response = await fetch(apiUrl('/api/v1/space-occupancy/apply'), {
         method: 'POST',
@@ -203,13 +219,20 @@ export function PlannerPage() {
         body: JSON.stringify({ port_id: selectedPort.id, berth_id: opportunity.berth_id, candidate_vessel_ids: opportunity.candidate_vessel_ids }),
       });
       if (!response.ok) throw new Error('Opportunity could not be applied');
-      await handleGeneratePlan();
-      setStatusMessage('Opportunity validated and applied through the constraint solver.');
+      const data = await response.json();
+      const optimizedAssignments = Array.isArray(data.optimization?.assignments) ? data.optimization.assignments : [];
+      if (optimizedAssignments.length > 0) {
+        setAssignments(mapAssignments(optimizedAssignments));
+        setAverageWaitHours(Number(data.optimization.average_waiting_time_hours ?? 0));
+      }
+      setAppliedOpportunityKeys((current) => new Set(current).add(opportunityKey));
+      setPlanGeneratedAt(new Date().toLocaleTimeString());
+      setStatusMessage(`Applied ${opportunity.candidate_vessel_ids.join(' + ')} to ${opportunity.berth_id}. The 72-hour schedule and wait metrics were updated.`);
       await loadSpaceOccupancy();
     } catch {
       setStatusMessage('The opportunity changed before it could be applied. Refresh the analysis and try again.');
     } finally {
-      setIsApplyingSpace(false);
+      setApplyingOpportunityKey(null);
     }
   };
 
@@ -255,7 +278,7 @@ export function PlannerPage() {
         {[
           { label: 'Planning Horizon', value: '72', unit: 'hours', color: '#071A2B' },
           { label: 'Vessels Scheduled', value: assignments.length.toString(), unit: 'vessels', color: '#1677C8' },
-          { label: 'Average Wait Time', value: '0.9', unit: 'hours', color: '#16A34A', note: '↓ 68% vs FIFO' },
+          { label: 'Average Wait Time', value: averageWaitHours.toFixed(1), unit: 'hours', color: '#16A34A', note: 'Updated by solver' },
           { label: 'Parallel Opportunities', value: spaceBerths.reduce((sum, berth) => sum + berth.opportunities.length, 0).toString(), unit: 'found', color: '#16A34A', note: 'Backend spatial analysis' },
         ].map((kpi) => (
           <div key={kpi.label} className="hl-card p-5 rounded-xl" style={{ borderTop: `2px solid ${kpi.color}` }}>
@@ -269,7 +292,7 @@ export function PlannerPage() {
         ))}
       </div>
 
-      <SpaceOccupancySection berths={spaceBerths} isLoading={isSpaceLoading} onApply={handleApplySpace} isApplying={isApplyingSpace} />
+      <SpaceOccupancySection berths={spaceBerths} isLoading={isSpaceLoading} onApply={handleApplySpace} applyingOpportunityKey={applyingOpportunityKey} appliedOpportunityKeys={appliedOpportunityKeys} />
 
       {/* Visual timeline */}
       <PlanTimeline assignments={assignments} />

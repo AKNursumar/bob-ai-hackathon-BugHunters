@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
+from app.models.database_models import Assignment
 from app.models.schemas import SpaceOccupancyApplyRequest, SpaceOccupancyResponse
 from app.services.space_occupancy_service import SpaceOccupancyAnalyzer
 
@@ -68,4 +69,29 @@ def apply_space_occupancy(request: SpaceOccupancyApplyRequest, db: Session = Dep
         horizon_start=now,
         preferred_berth_by_vessel={vessel_id: request.berth_id for vessel_id in request.candidate_vessel_ids},
     ))
+    if result.get("status") != "COMPLETED":
+        raise HTTPException(status_code=409, detail="The optimizer could not validate the proposed berth assignment")
+
+    optimized_by_vessel = {item["vessel_id"]: item for item in result.get("assignments", [])}
+    for vessel_id in request.candidate_vessel_ids:
+        assignment = optimized_by_vessel.get(vessel_id)
+        if not assignment:
+            raise HTTPException(status_code=409, detail=f"The optimizer could not assign vessel {vessel_id}")
+        existing = db.query(Assignment).filter(
+            Assignment.vessel_id == vessel_id,
+            Assignment.berth_id == request.berth_id,
+        ).first()
+        if existing:
+            existing.planned_start = datetime.fromisoformat(assignment["planned_start"])
+            existing.planned_end = datetime.fromisoformat(assignment["planned_end"])
+            existing.waiting_time_hours = assignment["waiting_time_hours"]
+        else:
+            db.add(Assignment(
+                vessel_id=vessel_id,
+                berth_id=request.berth_id,
+                planned_start=datetime.fromisoformat(assignment["planned_start"]),
+                planned_end=datetime.fromisoformat(assignment["planned_end"]),
+                waiting_time_hours=assignment["waiting_time_hours"],
+            ))
+    db.commit()
     return {"success": True, "opportunity": opportunity, "optimization": result}

@@ -33,10 +33,11 @@ type Props = {
   }>;
   isLoading: boolean;
   onApply: (opportunity: SpaceOpportunity) => void;
-  isApplying: boolean;
+  applyingOpportunityKey: string | null;
+  appliedOpportunityKeys: Set<string>;
 };
 
-export function SpaceOccupancySection({ berths, isLoading, onApply, isApplying }: Props) {
+export function SpaceOccupancySection({ berths, isLoading, onApply, applyingOpportunityKey, appliedOpportunityKeys }: Props) {
   const opportunities = berths.flatMap((berth) => berth.opportunities.map((opportunity) => ({ berth, opportunity })));
   const totalRecoverable = opportunities.reduce((sum, item) => sum + item.opportunity.required_length_m, 0);
 
@@ -62,6 +63,12 @@ export function SpaceOccupancySection({ berths, isLoading, onApply, isApplying }
       )}
       {opportunities.map(({ berth, opportunity }) => (
         <article key={`${opportunity.berth_id}-${opportunity.candidate_vessel_ids.join('-')}`} className="hl-card border-l-4 border-l-[#16A34A] p-5">
+          {(() => {
+            const opportunityKey = `${opportunity.berth_id}:${opportunity.candidate_vessel_ids.join(',')}`;
+            const isApplying = applyingOpportunityKey === opportunityKey;
+            const isApplied = appliedOpportunityKeys.has(opportunityKey);
+            return (
+              <>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="eyebrow mb-1">Space recovery opportunity</p>
@@ -82,7 +89,10 @@ export function SpaceOccupancySection({ berths, isLoading, onApply, isApplying }
             </div>
           </div>
           <p className="mt-4 border-t border-[#DCE3E8] pt-3 text-[11px] leading-5 text-[#3A5468]">{opportunity.explanation}</p>
-          <button onClick={() => onApply(opportunity)} disabled={isApplying || opportunity.status !== 'FEASIBLE'} className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#071A2B] px-4 py-2 text-[11px] font-bold text-white disabled:opacity-50"><Play className="h-3.5 w-3.5" />{isApplying ? 'Re-optimising...' : 'Apply to 72h Plan'}</button>
+          <button onClick={() => onApply(opportunity)} disabled={isApplying || isApplied || opportunity.status !== 'FEASIBLE'} className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#071A2B] px-4 py-2 text-[11px] font-bold text-white disabled:opacity-50"><Play className="h-3.5 w-3.5" />{isApplying ? 'Re-optimising...' : isApplied ? 'Applied to 72h Plan' : 'Apply to 72h Plan'}</button>
+              </>
+            );
+          })()}
         </article>
       ))}
     </section>
