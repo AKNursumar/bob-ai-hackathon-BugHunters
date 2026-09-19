@@ -886,6 +886,21 @@ class Generate72HourPlanTool(MCPTool):
                 },
                 status="DRAFT",
             )
+            
+            # --- APPLY THE OPTIMIZATION TO LIVE DATA ---
+            # Update the underlying VesselSchedule ETAs to match the planned 
+            # start times so that the frontend UI reflects the applied plan.
+            from app.models.database_models import VesselSchedule
+            from dateutil.parser import parse
+            for assignment in optimized.get("assignments", []):
+                v_id = assignment.get("vessel_id")
+                planned_start = assignment.get("planned_start")
+                if v_id and planned_start:
+                    sched = db.query(VesselSchedule).filter_by(port_id=port_id, vessel_id=v_id).first()
+                    if sched:
+                        sched.eta = parse(planned_start).replace(tzinfo=None)
+            db.commit()
+            # -------------------------------------------
 
             return {
                 "success": True,
