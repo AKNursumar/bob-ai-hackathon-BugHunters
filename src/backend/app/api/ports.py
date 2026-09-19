@@ -69,3 +69,40 @@ def get_port_status(port_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Port {port_id} not found")
     
     return status
+
+
+# ============================================================================
+# Crane Electrical, Mechanical, and Technical Diagnostics
+# ============================================================================
+
+@router.get("/ports/{port_id}/cranes/diagnostics")
+def get_crane_diagnostics_endpoint(port_id: str):
+    """Retrieve full mechanical, electrical, and technical telemetry for all cranes."""
+    from app.services.crane_diagnostic_service import get_crane_diagnostics
+    return {"cranes": get_crane_diagnostics(port_id)}
+
+
+@router.post("/ports/{port_id}/cranes/diagnostics/inject")
+def inject_crane_fault_endpoint(port_id: str, payload: dict):
+    """Inject a mechanical, electrical, or technical fault into a crane."""
+    from app.services.crane_diagnostic_service import inject_crane_fault
+    crane_id = payload.get("crane_id", f"{port_id}-CR-02")
+    fault_type = payload.get("fault_type", "ELECTRICAL")
+    updated = inject_crane_fault(port_id, crane_id, fault_type)
+    return {"crane": updated}
+
+
+@router.post("/ports/{port_id}/cranes/diagnostics/reset")
+def reset_crane_endpoint(port_id: str, payload: dict):
+    """Reset a crane to healthy operational state."""
+    from app.services.crane_diagnostic_service import reset_crane_health
+    crane_id = payload.get("crane_id", f"{port_id}-CR-02")
+    return {"crane": reset_crane_health(port_id, crane_id)}
+
+
+@router.post("/ports/{port_id}/cranes/diagnostics/mitigate")
+def auto_mitigate_endpoint(port_id: str):
+    """Execute autonomous mitigation for all detected crane faults."""
+    from app.services.crane_diagnostic_service import execute_auto_mitigation
+    return execute_auto_mitigation(port_id)
+

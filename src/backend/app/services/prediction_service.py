@@ -119,57 +119,10 @@ def predict_port(
 ) -> Dict[str, Any]:
     """
     Generate congestion forecast for a port across multiple horizons (24h, 48h, 72h).
+    Combines trained XGBoost macro models with real-time AISStream.io telemetry nowcasting.
     """
-    if horizons is None:
-        horizons = [1, 2, 3]
-
-    port_id_lower = port_id.lower()
-    settings_obj = get_settings()
-
-    now_iso = datetime.now(timezone.utc).isoformat()
-    indian_forecasts = _load_indian_forecast()
-    
-    # Ensure case-insensitive match for the port id
-    port_data = {}
-    for key, val in indian_forecasts.items():
-        if key.lower() == port_id_lower:
-            port_data = val
-            break
-            
-    contract_forecast = port_data.get("forecast", {})
-
-    forecast: Dict[str, Any] = {}
-    importance_combined: Dict[str, float] = {}
-
-    for h in horizons:
-        horizon_h = h * 24
-        key = f"forecast_{horizon_h}h"
-
-        cf = contract_forecast.get(f"{horizon_h}h", {})
-        prob = float(cf.get("risk_score", 0.75))
-
-        risk_level = classify_risk(prob)
-        forecast[key] = {
-            "probability": round(prob, 4),
-            "risk": risk_level,
-            "confidence": 0.85,
-        }
-
-        # Importances
-        drivers = _get_top_drivers(horizon_h)
-        for rank, d in enumerate(drivers):
-            importance_combined[f"{key}_{d}"] = round(0.35 / (rank + 1), 3)
-
-    return {
-        "port": port_id_lower,
-        "display_name": settings_obj.get_port_name(port_id_lower),
-        "generated_at": now_iso,
-        "data_as_of": now_iso,
-        "congestion_index": 78.5,
-        "forecast": forecast,
-        "drivers": _get_top_drivers(24),
-        "feature_importance": importance_combined,
-    }
+    from app.services.hybrid_model import get_hybrid_engine
+    return get_hybrid_engine().predict(port_id, horizons)
 
 
 def predict_all_ports(horizons: Optional[list] = None) -> Dict[str, Dict[str, Any]]:
